@@ -12,6 +12,10 @@ class BootReceiver : BroadcastReceiver() {
         if (!prefs.monitoringEnabled) return
         if (!PermissionUtils.hasUsageAccess(context) || !PermissionUtils.hasOverlay(context)) return
         val service = Intent(context, MonitoringService::class.java)
-        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(service) else context.startService(service)
+        try {
+            if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(service) else context.startService(service)
+        } catch (e: Exception) {
+            prefs.recordMonitorDiagnostic("boot_error", e.javaClass.simpleName + ": " + (e.message ?: ""))
+        }
     }
 }
