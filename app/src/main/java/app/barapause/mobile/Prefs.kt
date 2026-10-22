@@ -121,6 +121,13 @@ class Prefs(context: Context) {
     private fun bonusKey(pkg: String): String=(if(testMode) "test_" else "") + "bonus_" + pkg
     private fun cooldownKey(pkg: String): String=(if(testMode) "test_" else "") + "cooldown_" + pkg
 
+    fun monitorDiagnostic(key: String): String =
+        p.getString("diag_" + key, "") ?: ""
+
+    fun recordMonitorDiagnostic(key: String, value: String) {
+        p.edit().putString("diag_" + key, value.take(160)).apply()
+    }
+
     fun rules(): Map<String, AppRule> {
         val raw = p.getString("rules", "{}") ?: "{}"
         val obj = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
