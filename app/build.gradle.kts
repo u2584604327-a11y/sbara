@@ -16,6 +16,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Separate testing app so existing V1 settings are never destroyed by debug signing changes.
+            applicationIdSuffix = ".beta"
+            versionNameSuffix = "-beta-debug"
+        }
         release {
             isMinifyEnabled = false
         }
