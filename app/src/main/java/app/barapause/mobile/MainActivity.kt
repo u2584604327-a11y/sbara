@@ -105,6 +105,22 @@ class MainActivity : Activity() {
             android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"diagnostics"))
                 .setMessage(report).setPositiveButton("OK",null).show()
         })
+        root.addView(Ui.button(this, L10n.t(this,"popup_preview")) {
+            if (!prefs.monitoringEnabled) {
+                android.widget.Toast.makeText(this, L10n.t(this,"monitor_off"), android.widget.Toast.LENGTH_SHORT).show()
+            } else if (!PermissionUtils.hasOverlay(this)) {
+                android.widget.Toast.makeText(this, L10n.t(this,"authorize_first"), android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                val intent = Intent(this, MonitoringService::class.java).apply {
+                    action = MonitoringService.ACTION_TEST_POPUP
+                }
+                try { startForegroundService(intent) }
+                catch (e:Exception) {
+                    prefs.recordMonitorDiagnostic("error", e.javaClass.simpleName + ": " + (e.message ?: ""))
+                    android.widget.Toast.makeText(this, e.javaClass.simpleName, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
         root.addView(Ui.button(this, L10n.t(this,"restart_monitor")) {
             if (!PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
                 android.widget.Toast.makeText(this,L10n.t(this,"authorize_first"),android.widget.Toast.LENGTH_SHORT).show()

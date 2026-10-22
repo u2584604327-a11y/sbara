@@ -78,7 +78,7 @@ class SplashActivity : Activity() {
                 ObjectAnimator.ofFloat(title, View.TRANSLATION_Y, dp(12).toFloat(), 0f),
                 ObjectAnimator.ofFloat(subtitle, View.ALPHA, 0f, 1f)
             )
-            duration = 420L
+            duration = 370L
             interpolator = DecelerateInterpolator()
         }
         AnimatorSet().apply {

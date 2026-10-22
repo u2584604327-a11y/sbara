@@ -40,6 +40,7 @@ class AppPickerActivity : Activity() {
     private var category = "all"
     private val categories = listOf("all","selected","browser","social","video","ai","office","tools","other")
     private lateinit var chips: LinearLayout
+    private lateinit var scrollView: ScrollView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,7 +89,8 @@ class AppPickerActivity : Activity() {
         renderChips()
         container=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         root.addView(container)
-        setContentView(ScrollView(this).apply { addView(root) })
+        scrollView = ScrollView(this).apply { addView(root) }
+        setContentView(scrollView)
 
         summary.text="…"
         bg.execute {
@@ -152,6 +154,7 @@ class AppPickerActivity : Activity() {
         val rules=prefs.rules()
         val selected=rules.values.count { it.enabled }
         summary.text=L10n.t(this,"summary_apps")+": $selected   ·   "+apps.size
+        val oldScroll = if (::scrollView.isInitialized) scrollView.scrollY else 0
         container.removeAllViews()
         val filtered=apps.filter { app ->
             (query.isEmpty() || (app.label+" "+app.pkg).lowercase().contains(query)) &&
@@ -172,6 +175,7 @@ class AppPickerActivity : Activity() {
         } else {
             filtered.forEach { app -> container.addView(listCell(app,rules[app.pkg])) }
         }
+        if (::scrollView.isInitialized && query.isEmpty()) scrollView.post { scrollView.scrollTo(0, oldScroll) }
     }
 
     private fun icon(pkg:String,size:Int):ImageView=ImageView(this).apply {

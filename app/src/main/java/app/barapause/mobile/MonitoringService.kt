@@ -16,6 +16,11 @@ import android.util.Log
 
 
 class MonitoringService : Service() {
+    companion object {
+        const val ACTION_TEST_POPUP = "app.barapause.mobile.ACTION_TEST_POPUP"
+    }
+    private var previewUntilElapsed = 0L
+
     private val handler = Handler(Looper.getMainLooper())
     private val ticker = object : Runnable {
         override fun run() {
@@ -54,6 +59,15 @@ class MonitoringService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_TEST_POPUP) {
+            if (PermissionUtils.hasOverlay(this)) {
+                previewUntilElapsed = SystemClock.elapsedRealtime() + 10_000L
+                overlay.show("barapause-preview", "BaraPause", 10_000L, false, 60) {}
+                prefs.recordMonitorDiagnostic("preview", "overlay_added")
+            } else {
+                prefs.recordMonitorDiagnostic("preview", "overlay_permission_missing")
+            }
+        }
         return START_STICKY
     }
 
@@ -79,6 +93,15 @@ class MonitoringService : Service() {
         }
 
         val nowElapsed = SystemClock.elapsedRealtime()
+        if (previewUntilElapsed > nowElapsed) {
+            overlay.update(previewUntilElapsed - nowElapsed, false, 60)
+            lastTickElapsed = nowElapsed
+            prefs.recordMonitorDiagnostic("reason", "preview_popup")
+            return
+        } else if (previewUntilElapsed != 0L) {
+            previewUntilElapsed = 0L
+            overlay.hide()
+        }
         val delta = (nowElapsed - lastTickElapsed).coerceIn(0L, 2_000L)
         lastTickElapsed = nowElapsed
         val currentPkg = detector.currentPackage()
@@ -164,6 +187,7 @@ class MonitoringService : Service() {
         handler.removeCallbacks(ticker)
         if (::prefs.isInitialized) prefs.recordMonitorDiagnostic("last_destroy", System.currentTimeMillis().toString())
         overlay.hide()
+        previewUntilElapsed = 0L
         super.onDestroy()
     }
 
