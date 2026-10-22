@@ -32,14 +32,14 @@ class OverlayController(private val context: Context) {
         appLabel: String,
         remainingMs: Long,
         canExtend: Boolean,
-        extensionMinutes: Int,
+        extensionSeconds: Int,
         onExtend: () -> Unit
     ) {
         if (!PermissionUtils.hasOverlay(context)) return
         if (root == null || currentPkg != packageName) {
             hide()
             currentPkg = packageName
-            root = buildCard(appLabel, extensionMinutes, onExtend).also { card ->
+            root = buildCard(appLabel, extensionSeconds, onExtend).also { card ->
                 val params = WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
@@ -61,19 +61,20 @@ class OverlayController(private val context: Context) {
                     .start()
             }
         }
-        update(remainingMs, canExtend, extensionMinutes)
+        update(remainingMs, canExtend, extensionSeconds)
     }
 
-    private fun buildCard(appLabel: String, extensionMinutes: Int, onExtend: () -> Unit): View {
+    private fun buildCard(appLabel: String, extensionSeconds: Int, onExtend: () -> Unit): View {
         val outer = FrameLayout(context).apply {
             setPadding(dp(14), dp(8), dp(14), dp(18))
         }
 
+        val colors = Appearance.palette(context)
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(16), dp(18), dp(16))
             elevation = dp(12).toFloat()
-            background = rounded(Color.rgb(255, 250, 239), 26)
+            background = rounded(colors.card, 26)
         }
 
         val header = LinearLayout(context).apply {
@@ -91,15 +92,15 @@ class OverlayController(private val context: Context) {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
         val title = TextView(context).apply {
-            text = "该歇一会儿啦"
+            text = L10n.t(context,"break_title")
             textSize = 21f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.rgb(62, 48, 38))
+            setTextColor(colors.text)
         }
         val subtitle = TextView(context).apply {
-            text = "$appLabel 已达到本轮使用上限。BaraPause 不锁屏，只提醒你离开一会儿。"
+            text = appLabel + L10n.t(context,"break_desc")
             textSize = 14.5f
-            setTextColor(Color.rgb(96, 77, 62))
+            setTextColor(colors.muted)
             setPadding(0, dp(3), 0, 0)
         }
         titleGroup.addView(title)
@@ -111,7 +112,7 @@ class OverlayController(private val context: Context) {
             textSize = 29f
             gravity = Gravity.CENTER
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.rgb(86, 116, 91))
+            setTextColor(colors.accent)
             setPadding(0, dp(10), 0, dp(8))
         }
 
@@ -122,17 +123,17 @@ class OverlayController(private val context: Context) {
         extendButton = Button(context).apply {
             text = "再用 $extensionMinutes 分钟"
             isAllCaps = false
-            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.rgb(232, 219, 192))
-            setTextColor(Color.rgb(66, 51, 39))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(colors.button)
+            setTextColor(colors.text)
             setOnClickListener { onExtend() }
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 marginEnd = dp(6)
             }
         }
         val leaveButton = Button(context).apply {
-            text = "先离开"
+            text = L10n.t(context,"leave")
             isAllCaps = false
-            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.rgb(116, 146, 117))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(colors.accent)
             setTextColor(Color.WHITE)
             setOnClickListener {
                 hide()
@@ -150,10 +151,10 @@ class OverlayController(private val context: Context) {
         actions.addView(leaveButton)
 
         val note = TextView(context).apply {
-            text = "弹窗之外仍可操作；若继续停留在当前 App，提醒会持续显示。"
+            text = L10n.t(context,"overlay_note")
             textSize = 12.5f
             gravity = Gravity.CENTER
-            setTextColor(Color.rgb(128, 108, 91))
+            setTextColor(colors.muted)
             setPadding(0, dp(6), 0, 0)
         }
 
@@ -165,11 +166,11 @@ class OverlayController(private val context: Context) {
         return outer
     }
 
-    fun update(remainingMs: Long, canExtend: Boolean, extensionMinutes: Int) {
+    fun update(remainingMs: Long, canExtend: Boolean, extensionSeconds: Int) {
         val totalSec = (remainingMs.coerceAtLeast(0L) + 999L) / 1000L
         val min = totalSec / 60
         val sec = totalSec % 60
-        countdown?.text = "休息 %02d:%02d".format(min, sec)
+        countdown?.text = L10n.t(context,"rest") + " %02d:%02d".format(min, sec)
         extendButton?.apply {
             visibility = if (canExtend) View.VISIBLE else View.GONE
             text = "再用 $extensionMinutes 分钟"
@@ -189,11 +190,14 @@ class OverlayController(private val context: Context) {
         currentPkg = null
     }
 
+    private fun duration(context: Context, seconds: Int): String =
+        if (seconds % 60 == 0) "${seconds / 60} " + L10n.t(context, "minute") else "$seconds " + L10n.t(context, "seconds")
+
     private fun rounded(color: Int, radiusDp: Int) = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         setColor(color)
         cornerRadius = dp(radiusDp).toFloat()
-        setStroke(dp(1), Color.rgb(230, 218, 198))
+        setStroke(dp(1), Appearance.palette(context).stroke)
     }
 
     private fun dp(value: Int): Int =
