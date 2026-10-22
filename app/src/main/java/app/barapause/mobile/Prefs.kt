@@ -128,6 +128,27 @@ class Prefs(context: Context) {
         p.edit().putString("diag_" + key, value.take(160)).apply()
     }
 
+    fun savedScroll(page: String): Int = p.getInt("scroll_" + page, 0).coerceAtLeast(0)
+    fun saveScroll(page: String, pixels: Int) {
+        p.edit().putInt("scroll_" + page, pixels.coerceAtLeast(0)).apply()
+    }
+
+    var pickerCategory: String
+        get() = p.getString("picker_category", "all") ?: "all"
+        set(v) = p.edit().putString("picker_category", v).apply()
+
+    var pickerQuery: String
+        get() = p.getString("picker_query", "") ?: ""
+        set(v) = p.edit().putString("picker_query", v.take(128)).apply()
+
+    var quickTargetPackage: String
+        get() = p.getString("quick_target", "") ?: ""
+        set(v) = p.edit().putString("quick_target", v).apply()
+
+    var quickTargetLabel: String
+        get() = p.getString("quick_target_label", "") ?: ""
+        set(v) = p.edit().putString("quick_target_label", v.take(80)).apply()
+
     fun rules(): Map<String, AppRule> {
         val raw = p.getString("rules", "{}") ?: "{}"
         val obj = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
@@ -159,9 +180,9 @@ class Prefs(context: Context) {
         set(v) = p.edit().putString("popup_image_uri", v).apply()
 
     var popupMotion: String
-        get() = p.getString("popup_motion", "breathe") ?: "breathe"
+        get() = p.getString("popup_motion", "peek") ?: "breathe"
         set(v) = p.edit().putString("popup_motion",
-            if(v in setOf("still","breathe","bob")) v else "breathe").apply()
+            if(v in setOf("still","breathe","bob","peek","wave")) v else "peek").apply()
 
     fun putRule(rule: AppRule) {
         val all = rules().toMutableMap()

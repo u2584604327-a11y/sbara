@@ -13,6 +13,7 @@ import android.widget.ScrollView
 import android.widget.Switch
 
 class MainActivity : Activity() {
+    private lateinit var page: ScrollView
     private lateinit var prefs: Prefs
     private lateinit var statusText: android.widget.TextView
 
@@ -51,6 +52,24 @@ class MainActivity : Activity() {
         statusText = Ui.text(this, "", 14.5f)
         root.addView(statusText)
 
+        root.addView(Ui.button(this, "🌐 " + L10n.t(this,"language") + " · " +
+            L10n.t(this, when (prefs.language) {
+                "zh-Hans" -> "language_zh"
+                "zh-Hant" -> "language_tw"
+                "ja" -> "language_ja"
+                "en" -> "language_en"
+                else -> "language_system"
+            })) {
+            val codes=listOf("system","zh-Hans","zh-Hant","en","ja")
+            val keys=listOf("language_system","language_zh","language_tw","language_en","language_ja")
+            android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"language"))
+                .setSingleChoiceItems(keys.map { L10n.t(this,it) }.toTypedArray(),codes.indexOf(prefs.language)) { d,n ->
+                    prefs.language=codes[n]
+                    WidgetUpdater.refresh(this)
+                    d.dismiss()
+                    render()
+                }.show()
+        })
         root.addView(Ui.section(this, L10n.t(this,"permissions")))
         root.addView(Ui.text(this,
             L10n.t(this,"permission_detail"),
@@ -135,6 +154,16 @@ class MainActivity : Activity() {
                 }
             }
         })
+        root.addView(Ui.button(this, "▦ " + L10n.t(this,"add_widget")) {
+            val widgetManager=android.appwidget.AppWidgetManager.getInstance(this)
+            val provider=android.content.ComponentName(this,WideWidgetProvider::class.java)
+            if(android.os.Build.VERSION.SDK_INT>=26 && widgetManager.isRequestPinAppWidgetSupported) {
+                val ok=widgetManager.requestPinAppWidget(provider,null,null)
+                if(!ok) android.widget.Toast.makeText(this,L10n.t(this,"widget_manual"),android.widget.Toast.LENGTH_LONG).show()
+            } else {
+                android.widget.Toast.makeText(this,L10n.t(this,"widget_manual"),android.widget.Toast.LENGTH_LONG).show()
+            }
+        })
         root.addView(Ui.button(this, L10n.t(this,"quick_search")) {
             startActivity(Intent(this, QuickLaunchActivity::class.java))
         })
@@ -147,8 +176,16 @@ class MainActivity : Activity() {
         root.addView(Ui.button(this, L10n.t(this,"exit_interface")) { finish() })
         root.addView(Ui.section(this, L10n.t(this,"privacy")))
         root.addView(Ui.text(this, L10n.t(this,"privacy_detail"), 13.5f))
-        setContentView(ScrollView(this).apply { addView(root) })
+        val pos = if (::page.isInitialized) page.scrollY else prefs.savedScroll("main")
+        page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@MainActivity).bg);addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,pos) }
         refreshStatus()
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) prefs.saveScroll("main",page.scrollY)
+        super.onPause()
     }
 
     private fun refreshStatus(extra: String? = null) {

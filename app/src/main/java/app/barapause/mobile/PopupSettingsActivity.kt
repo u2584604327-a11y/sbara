@@ -16,6 +16,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 
 class PopupSettingsActivity:Activity() {
+    private lateinit var page: ScrollView
     private val PICK_IMAGE = 214
 
     private lateinit var prefs:Prefs
@@ -84,7 +85,7 @@ class PopupSettingsActivity:Activity() {
         root.addView(Ui.text(this,L10n.t(this,"photo_hint"),13f))
         root.addView(Ui.section(this,L10n.t(this,"popup_motion")))
         root.addView(Ui.button(this,L10n.t(this,"motion_"+prefs.popupMotion)) {
-            val choices=listOf("still","breathe","bob")
+            val choices=listOf("peek","wave","bob","breathe","still")
             AlertDialog.Builder(this).setTitle(L10n.t(this,"popup_motion"))
                 .setSingleChoiceItems(choices.map { L10n.t(this,"motion_"+it) }.toTypedArray(),
                     choices.indexOf(prefs.popupMotion).coerceAtLeast(0)) { dialog,n ->
@@ -105,12 +106,14 @@ class PopupSettingsActivity:Activity() {
                 .setPositiveButton(L10n.t(this,"save")) { _,_ ->
                     prefs.popupPosition="bottom";prefs.popupSize="normal";prefs.popupColor="sage"
                     prefs.popupAnimation="spring";prefs.popupOpacity=100;prefs.popupMascot=true
-                    prefs.popupTitle="";prefs.popupBody="";prefs.popupImageUri="";prefs.popupMotion="breathe"
+                    prefs.popupTitle="";prefs.popupBody="";prefs.popupImageUri="";prefs.popupMotion="peek"
                     recreate()
                 }.show()
         })
 
-        setContentView(ScrollView(this).apply { addView(root) })
+        page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@PopupSettingsActivity).bg);addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,prefs.savedScroll("popup")) }
     }
 
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
@@ -132,6 +135,11 @@ class PopupSettingsActivity:Activity() {
         } catch(e:Exception) {
             Toast.makeText(this,e.javaClass.simpleName,Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) prefs.saveScroll("popup",page.scrollY)
+        super.onPause()
     }
 
     private fun choose(key:String,options:List<String>,now:String,save:(String)->Unit) {
