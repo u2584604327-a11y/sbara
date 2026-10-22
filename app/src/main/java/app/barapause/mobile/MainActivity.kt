@@ -136,7 +136,13 @@ class MainActivity : Activity() {
         val rules = prefs.rules().values.count { it.enabled }
         val usage = if (PermissionUtils.hasUsageAccess(this)) "✓" else "✗"
         val overlay = if (PermissionUtils.hasOverlay(this)) "✓" else "✗"
-        val monitor = if (prefs.monitoringEnabled) L10n.t(this,"monitor_on") else L10n.t(this,"monitor_off")
+        val heartbeat = prefs.monitorDiagnostic("heartbeat").toLongOrNull() ?: 0L
+        val freshHeartbeat = heartbeat > 0L && (System.currentTimeMillis() - heartbeat) in 0L..10_000L
+        val monitor = when {
+            !prefs.monitoringEnabled -> L10n.t(this,"monitor_off")
+            freshHeartbeat -> L10n.t(this,"diag_running")
+            else -> L10n.t(this,"diag_stopped")
+        }
         statusText.text = L10n.t(this,"permissions")+": $usage / $overlay  ·  $monitor\n"+L10n.t(this,"summary_apps")+": $rules   "+L10n.t(this,"summary_blocks")+": ${prefs.blocksToday()}" +
             (extra?.let { "\n$it" } ?: "")
     }
