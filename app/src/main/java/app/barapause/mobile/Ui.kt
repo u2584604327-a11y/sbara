@@ -1,5 +1,7 @@
 package app.barapause.mobile
 
+import android.app.Activity
+import android.view.Gravity
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -51,6 +53,26 @@ object Ui {
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             topMargin = dp(context, 4)
         }
+    }
+
+    /** Common navigation bar: a real, accessible back control on every subpage. */
+    fun navHeader(activity: Activity, title: String): LinearLayout {
+        val row = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val back = TextView(activity).apply {
+            text = "‹"
+            textSize = 35f
+            gravity = Gravity.CENTER
+            contentDescription = L10n.t(activity, "back")
+            setTextColor(Appearance.palette(activity).text)
+            setOnClickListener { activity.finish() }
+            layoutParams = LinearLayout.LayoutParams(dp(activity, 52), dp(activity, 52))
+        }
+        row.addView(back)
+        row.addView(title(activity, title), LinearLayout.LayoutParams(0, -2, 1f))
+        return row
     }
 
     fun cardBackground(context: Context): GradientDrawable = Appearance.panel(context)

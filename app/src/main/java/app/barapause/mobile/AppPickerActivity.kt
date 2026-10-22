@@ -40,6 +40,7 @@ class AppPickerActivity : Activity() {
     private var category = "all"
     private val categories = listOf("all","selected","browser","social","video","ai","office","tools","other")
     private lateinit var chips: LinearLayout
+    private lateinit var bulkRow: LinearLayout
     private lateinit var scrollView: ScrollView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,8 +48,8 @@ class AppPickerActivity : Activity() {
         Appearance.applyWindow(this)
         prefs = Prefs(this)
         val root = Ui.column(this)
-        root.addView(Ui.title(this, L10n.t(this,"selected_apps")))
-        root.addView(Ui.text(this,L10n.t(this,"apps_intro"),14f))
+        root.addView(Ui.navHeader(this, L10n.t(this,"selected_apps")))
+        root.addView(Ui.text(this,L10n.t(this,"apps_intro")+" · "+L10n.t(this,"bulk_scope"),13f))
         summary = Ui.text(this,"",14f)
         root.addView(summary)
 
@@ -67,6 +68,25 @@ class AppPickerActivity : Activity() {
             })
         }
         root.addView(search)
+        bulkRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        fun bulkBtn(key: String, op: String) {
+            bulkRow.addView(Button(this).apply {
+                isAllCaps = false
+                text = L10n.t(this@AppPickerActivity,key)
+                textSize = 12f
+                minWidth = 0
+                minimumWidth = 0
+                setPadding(Ui.dp(this@AppPickerActivity,5),0,Ui.dp(this@AppPickerActivity,5),0)
+                setOnClickListener { bulkChange(op) }
+            }, LinearLayout.LayoutParams(0,Ui.dp(this,48),1f))
+        }
+        bulkBtn("select_all","all")
+        bulkBtn("invert","invert")
+        bulkBtn("select_none","none")
+        root.addView(bulkRow)
 
         val modeRow=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER_VERTICAL }
         toggleView=Button(this).apply {
@@ -257,6 +277,29 @@ class AppPickerActivity : Activity() {
             setOnClickListener { changeEnabled(app,!selected) }
             setOnLongClickListener { chooseDuration(app);true }
         }
+    }
+
+    /** Selection actions apply only to the current search/category result. */
+    private fun bulkChange(op: String) {
+        val rules = prefs.rules()
+        val targets = apps.filter { app ->
+            (query.isEmpty() || (app.label + " " + app.pkg).lowercase().contains(query)) &&
+                (category == "all" ||
+                    (category == "selected" && rules[app.pkg]?.enabled == true) ||
+                    app.category == category)
+        }
+        val updates = targets.map { app ->
+            val old = rules[app.pkg]
+            val enabled = when(op) {
+                "all" -> true
+                "none" -> false
+                else -> !(old?.enabled ?: false)
+            }
+            AppRule(app.pkg, app.label, old?.limitMinutes ?: 20,
+                enabled, old?.limitSeconds ?: 1200)
+        }
+        prefs.putRulesBatch(updates)
+        renderItems()
     }
 
     private fun changeEnabled(app:Installed,enable:Boolean) {

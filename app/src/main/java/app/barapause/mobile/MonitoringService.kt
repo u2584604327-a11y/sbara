@@ -1,5 +1,7 @@
 package app.barapause.mobile
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -35,6 +37,8 @@ class MonitoringService : Service() {
     private lateinit var detector: ForegroundAppDetector
     private lateinit var overlay: OverlayController
     private var lastPkg: String? = null
+    private var lastNotificationAt=0L
+    private var lastNotificationText=""
     private var lastTickElapsed = 0L
 
     override fun onCreate() {
@@ -89,6 +93,7 @@ class MonitoringService : Service() {
             lastPkg = null
             lastTickElapsed = SystemClock.elapsedRealtime()
             prefs.recordMonitorDiagnostic("reason", "screen_off")
+            refreshNotification(L10n.t(this,"not_monitoring"))
             return
         }
 
@@ -112,6 +117,7 @@ class MonitoringService : Service() {
             overlay.hide()
             lastPkg = currentPkg
             prefs.recordMonitorDiagnostic("reason", if(currentPkg == null) "foreground_unknown" else "not_limited")
+            refreshNotification(L10n.t(this,"not_monitoring"))
             return
         }
 
@@ -140,6 +146,8 @@ class MonitoringService : Service() {
 
         if (cooldownUntil > nowWall) {
             prefs.recordMonitorDiagnostic("reason", "break_active")
+            refreshNotification(rule.label + " · " + L10n.t(this,"break_remaining") +
+                " " + duration(cooldownUntil - nowWall))
             val remaining = cooldownUntil - nowWall
             overlay.show(
                 packageName = currentPkg,
@@ -156,7 +164,41 @@ class MonitoringService : Service() {
             }
         } else {
             prefs.recordMonitorDiagnostic("reason", "counting")
+            refreshNotification(rule.label + " · " + L10n.t(this,"remaining") +
+                " " + duration(effectiveLimit - prefs.sessionMs(currentPkg)))
             overlay.hide()
+        }
+    }
+
+    private fun duration(ms: Long): String {
+        val sec=(ms.coerceAtLeast(0L)+999L)/1000L
+        return "%02d:%02d".format(java.util.Locale.ROOT,sec/60,sec%60)
+    }
+
+    /**
+     * Refresh no more than once per 15 seconds; don't attempt to bypass notification
+     * permission/channel opt-outs. Android may still allow FGS notifications to be dismissed.
+     */
+    private fun refreshNotification(content: String) {
+        val now=SystemClock.elapsedRealtime()
+        if(now-lastNotificationAt<15_000L && content.substringBefore(" · ")==lastNotificationText.substringBefore(" · ")) return
+        lastNotificationAt=now
+        lastNotificationText=content
+        if(Build.VERSION.SDK_INT>=33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) {
+            prefs.recordMonitorDiagnostic("notification","permission_denied")
+            return
+        }
+        try {
+            val nm=getSystemService(NotificationManager::class.java)
+            if(Build.VERSION.SDK_INT>=26 && !nm.areNotificationsEnabled()) {
+                prefs.recordMonitorDiagnostic("notification","disabled")
+                return
+            }
+            nm.notify(1001,buildNotification(content))
+            prefs.recordMonitorDiagnostic("notification",content)
+        } catch(e:Exception) {
+            prefs.recordMonitorDiagnostic("notification",e.javaClass.simpleName)
         }
     }
 
@@ -170,14 +212,16 @@ class MonitoringService : Service() {
         }
     }
 
-    private fun buildNotification(): android.app.Notification {
+    private fun buildNotification(content: String = L10n.t(this,"not_monitoring")): android.app.Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val builder = android.app.Notification.Builder(this, "monitor")
         return builder
             .setSmallIcon(R.drawable.ic_stat_barapause)
             .setContentTitle(L10n.t(this,"service_title"))
-            .setContentText(L10n.t(this,"service_desc"))
+            .setContentText(content)
+            .setOnlyAlertOnce(true)
+            .setCategory(android.app.Notification.CATEGORY_STATUS)
             .setOngoing(true)
             .setContentIntent(pi)
             .build()

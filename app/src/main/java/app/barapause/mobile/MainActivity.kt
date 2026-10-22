@@ -135,12 +135,16 @@ class MainActivity : Activity() {
                 }
             }
         })
+        root.addView(Ui.button(this, L10n.t(this,"quick_search")) {
+            startActivity(Intent(this, QuickLaunchActivity::class.java))
+        })
         root.addView(Ui.button(this, L10n.t(this,"selected_apps")) { startActivity(Intent(this, AppPickerActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"settings")) { startActivity(Intent(this, SettingsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"stats")) { startActivity(Intent(this, StatsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"popup_customize")) { startActivity(Intent(this, PopupSettingsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"battery")) { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) })
 
+        root.addView(Ui.button(this, L10n.t(this,"exit_interface")) { finish() })
         root.addView(Ui.section(this, L10n.t(this,"privacy")))
         root.addView(Ui.text(this, L10n.t(this,"privacy_detail"), 13.5f))
         setContentView(ScrollView(this).apply { addView(root) })

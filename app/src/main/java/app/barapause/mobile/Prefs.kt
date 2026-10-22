@@ -147,6 +147,22 @@ class Prefs(context: Context) {
         return out
     }
 
+    /** One atomic preference write for batch selection; preserves prior individual limits. */
+    fun putRulesBatch(changes: List<AppRule>) {
+        val all = rules().toMutableMap()
+        for (rule in changes) all[rule.packageName] = rule
+        saveRules(all)
+    }
+
+    var popupImageUri: String
+        get() = p.getString("popup_image_uri", "") ?: ""
+        set(v) = p.edit().putString("popup_image_uri", v).apply()
+
+    var popupMotion: String
+        get() = p.getString("popup_motion", "breathe") ?: "breathe"
+        set(v) = p.edit().putString("popup_motion",
+            if(v in setOf("still","breathe","bob")) v else "breathe").apply()
+
     fun putRule(rule: AppRule) {
         val all = rules().toMutableMap()
         all[rule.packageName] = rule

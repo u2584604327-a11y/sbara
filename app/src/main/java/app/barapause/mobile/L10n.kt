@@ -231,11 +231,75 @@ object L10n {
         "diag_error" to "最後のエラー"
     )
 
+    private val newEn=mapOf(
+        "back" to "Back", "exit_interface" to "Close app window (keep monitoring)",
+        "select_all" to "Select all", "invert" to "Invert", "select_none" to "Deselect all",
+        "bulk_scope" to "Bulk changes apply to current filter",
+        "quick_search" to "Quick launch & search",
+        "quick_search_explain" to "Search works directly only if the target app exposes a public Android search action; otherwise the query is copied before launching.",
+        "quick_search_hint" to "Search installed app names", "query_text" to "Enter search keywords",
+        "choose_app" to "Select an app", "launch_app" to "Open app",
+        "search_in_app" to "Search in app", "copy_and_open" to "Copy query & open app",
+        "search_fallback" to "This app has no public compatible search entry; text copied and app opened.",
+        "query_required" to "Enter a query first",
+        "popup_photo" to "Custom popup image (local)", "choose_photo" to "Select image / animated GIF or WebP",
+        "remove_photo" to "Use built-in mascot", "photo_hint" to "Image stays on this device. File access can be revoked.",
+        "popup_motion" to "Mascot movement", "motion_still" to "Still",
+        "motion_breathe" to "Gentle breathing", "motion_bob" to "Playful bounce",
+        "remaining" to "Remaining", "break_remaining" to "Rest remaining",
+        "not_monitoring" to "No limited app active", "notification_note" to "The OS may hide this notification if you disable notifications."
+    );
+    private val newZh=mapOf(
+        "back" to "返回", "exit_interface" to "退出界面（保留监控）",
+        "select_all" to "全选", "invert" to "反选", "select_none" to "全不选",
+        "bulk_scope" to "批量操作仅作用于当前筛选结果",
+        "quick_search" to "智能启动与搜索",
+        "quick_search_explain" to "目标 App 开放系统搜索接口时可直接搜索；否则复制关键词并打开应用。", "quick_search_hint" to "搜索已安装的软件",
+        "query_text" to "输入搜索关键词", "choose_app" to "选择软件",
+        "launch_app" to "打开软件", "search_in_app" to "应用内搜索",
+        "copy_and_open" to "复制关键词并打开", "search_fallback" to "该软件未提供可调用的公开搜索入口，已复制关键词并打开软件。",
+        "query_required" to "请先填写关键词",
+        "popup_photo" to "自定义弹窗图片（本地）", "choose_photo" to "选择照片 / 动态 GIF 或 WebP",
+        "remove_photo" to "恢复默认水豚", "photo_hint" to "图片只保留在本机；撤销文件授权后会恢复默认形象。",
+        "popup_motion" to "动态效果", "motion_still" to "静止", "motion_breathe" to "轻柔呼吸",
+        "motion_bob" to "活泼弹跳", "remaining" to "剩余", "break_remaining" to "休息剩余",
+        "not_monitoring" to "当前没有受限 App", "notification_note" to "如果系统关闭了通知权限或通知频道，通知可能不会显示。"
+    );
+    private val newTw=mapOf(
+        "back" to "返回", "exit_interface" to "關閉畫面（保留監控）",
+        "select_all" to "全選", "invert" to "反選", "select_none" to "全部取消",
+        "bulk_scope" to "批次操作僅作用於目前篩選結果", "quick_search" to "快速啟動與搜尋",
+        "quick_search_hint" to "搜尋已安裝的 App", "quick_search_explain" to "只有 App 提供公開搜尋介面時才能直接搜尋；否則複製關鍵字後開啟。", "query_text" to "輸入搜尋關鍵字",
+        "choose_app" to "選擇 App", "launch_app" to "開啟 App", "search_in_app" to "App 內搜尋",
+        "copy_and_open" to "複製並開啟", "search_fallback" to "App 不支援公開搜尋入口；已複製關鍵字並開啟。",
+        "query_required" to "請輸入關鍵字", "popup_photo" to "自訂本機圖片",
+        "choose_photo" to "選擇圖片 / GIF / WebP", "remove_photo" to "還原水豚",
+        "photo_hint" to "圖片只留在裝置內。", "popup_motion" to "動態效果",
+        "motion_still" to "靜止", "motion_breathe" to "輕柔呼吸", "motion_bob" to "彈跳",
+        "remaining" to "剩餘", "break_remaining" to "休息剩餘", "not_monitoring" to "目前沒有受限 App"
+    );
+    private val newJa=mapOf(
+        "back" to "戻る", "exit_interface" to "画面を閉じる（監視は継続）",
+        "select_all" to "すべて選択", "invert" to "選択を反転", "select_none" to "すべて解除",
+        "bulk_scope" to "現在の絞り込み対象に適用", "quick_search" to "アプリ起動・検索",
+        "quick_search_hint" to "インストール済みアプリを検索", "quick_search_explain" to "公開検索 API がないアプリはキーワードをコピーして開きます。", "query_text" to "検索キーワード",
+        "choose_app" to "アプリを選択", "launch_app" to "開く",
+        "search_in_app" to "アプリ内検索", "copy_and_open" to "コピーして開く",
+        "search_fallback" to "このアプリは公開検索に非対応のため、キーワードをコピーして起動しました。",
+        "query_required" to "キーワードを入力してください",
+        "popup_photo" to "カスタム画像（ローカル）", "choose_photo" to "画像 / GIF / WebP を選ぶ",
+        "remove_photo" to "カピバラに戻す", "photo_hint" to "画像は端末内のみ。",
+        "popup_motion" to "動き", "motion_still" to "静止",
+        "motion_breathe" to "呼吸", "motion_bob" to "ジャンプ",
+        "remaining" to "残り", "break_remaining" to "休憩残り", "not_monitoring" to "制限アプリは未使用"
+    );
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
         val p=when(loc) { "zh-Hans" -> popupZh[key]; "zh-Hant" -> popupTw[key]; "ja" -> popupJa[key]; else -> popupEn[key] }
         val monitor=when(loc) { "zh-Hans" -> monitorZh[key]; "zh-Hant" -> monitorTw[key]; "ja" -> monitorJa[key]; else -> monitorEn[key] }
-        return v ?: p ?: monitor ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: key
+        val n=when(loc) { "zh-Hans" -> newZh[key]; "zh-Hant" -> newTw[key]; "ja" -> newJa[key]; else -> newEn[key] }
+        return v ?: p ?: monitor ?: n ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: key
     }
 }
