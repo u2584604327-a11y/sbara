@@ -1,5 +1,7 @@
 package app.barapause.mobile
 
+import android.animation.Animator
+import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.graphics.ImageDecoder
@@ -33,7 +35,7 @@ class OverlayController(private val context: Context) {
     private var countdown: TextView? = null
     private var extendButton: Button? = null
     private var currentPkg: String? = null
-    private var mascotAnimator: ObjectAnimator? = null
+    private var mascotAnimator: Animator? = null
     private var mediaDrawable: Drawable? = null
 
     fun show(packageName: String, appLabel: String, remainingMs: Long, canExtend: Boolean,
@@ -124,19 +126,7 @@ class OverlayController(private val context: Context) {
                 mediaDrawable=drawable
                 (drawable as? Animatable)?.start()
             } else mascotView.setImageResource(R.drawable.capybara_mascot)
-            if(preferences.popupMotion!="still") {
-                // Real Android animation, not just a still picture in an animated container.
-                mascotAnimator?.cancel()
-                mascotAnimator=when(preferences.popupMotion) {
-                    "bob" -> ObjectAnimator.ofFloat(mascotView,View.TRANSLATION_Y,0f,-dp(9).toFloat(),0f)
-                    else -> ObjectAnimator.ofFloat(mascotView,View.SCALE_Y,1f,1.055f,1f)
-                }.apply {
-                    duration=if(preferences.popupMotion=="bob") 1250L else 1800L
-                    repeatCount=ValueAnimator.INFINITE
-                    repeatMode=ValueAnimator.RESTART
-                    start()
-                }
-            }
+            startMascotMotion(mascotView)
             row.addView(mascotView)
         }
         val labels=LinearLayout(context).apply {
@@ -207,6 +197,58 @@ class OverlayController(private val context: Context) {
         return outer
     }
 
+    /**
+     * Expressive, continuous motion for the actual overlay and the in-app preview.
+     * "peek" uses a spring entrance and a repeating head tilt; custom animated
+     * GIF/WebP plays underneath this view animation without external libraries.
+     */
+    private fun startMascotMotion(view: ImageView) {
+        mascotAnimator?.cancel()
+        mascotAnimator=null
+        val mode=preferences.popupMotion
+        if(mode=="still") return
+        if(mode=="peek") {
+            view.translationY=dp(58).toFloat()
+            view.alpha=0f
+            view.animate().translationY(0f).alpha(1f).setDuration(680L)
+                .setInterpolator(OvershootInterpolator(1.2f))
+                .withEndAction { repeatMascotMotion(view,"wave") }.start()
+        } else repeatMascotMotion(view,mode)
+    }
+
+    private fun repeatMascotMotion(view: ImageView,mode: String) {
+        if(mode=="still") return
+        view.post {
+            view.pivotX=view.width * 0.48f
+            view.pivotY=view.height * 0.82f
+            val first: ObjectAnimator
+            val second: ObjectAnimator
+            when(mode) {
+                "wave" -> {
+                    first=ObjectAnimator.ofFloat(view,View.ROTATION,-9f,8f,-5f,0f)
+                    second=ObjectAnimator.ofFloat(view,View.TRANSLATION_Y,0f,-5f,0f)
+                }
+                "bob" -> {
+                    first=ObjectAnimator.ofFloat(view,View.TRANSLATION_Y,0f,-dp(12).toFloat(),0f)
+                    second=ObjectAnimator.ofFloat(view,View.ROTATION,-3f,3f,0f)
+                }
+                else -> {
+                    first=ObjectAnimator.ofFloat(view,View.SCALE_Y,1f,1.10f,1f)
+                    second=ObjectAnimator.ofFloat(view,View.SCALE_X,1f,0.97f,1f)
+                }
+            }
+            listOf(first,second).forEach {
+                it.duration=if(mode=="wave") 1450L else 1800L
+                it.repeatCount=ValueAnimator.INFINITE
+                it.repeatMode=ValueAnimator.RESTART
+            }
+            mascotAnimator=AnimatorSet().apply {
+                playTogether(first,second)
+                start()
+            }
+        }
+    }
+
     fun update(remainingMs:Long,canExtend:Boolean,extensionSeconds:Int) {
         val t=(remainingMs.coerceAtLeast(0L)+999L)/1000L
         countdown?.text=L10n.t(context,"rest")+" %02d:%02d".format(t/60,t%60)
@@ -217,6 +259,7 @@ class OverlayController(private val context: Context) {
     }
 
     fun hide() {
+        root?.animate()?.cancel()
         mascotAnimator?.cancel()
         mascotAnimator=null
         (mediaDrawable as? Animatable)?.stop()

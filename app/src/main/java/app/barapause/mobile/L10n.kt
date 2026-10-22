@@ -315,6 +315,11 @@ object L10n {
         "quick_search_widget" to "タップして検索語を入力"
     )
 
+    private val motionEn=mapOf("motion_peek" to "Peek + wave","motion_wave" to "Wave")
+    private val motionZh=mapOf("motion_peek" to "探头登场＋挥手","motion_wave" to "左右挥手")
+    private val motionTw=mapOf("motion_peek" to "探頭＋揮手","motion_wave" to "左右揮手")
+    private val motionJa=mapOf("motion_peek" to "ひょっこり＋手を振る","motion_wave" to "手を振る")
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
@@ -322,6 +327,7 @@ object L10n {
         val monitor=when(loc) { "zh-Hans" -> monitorZh[key]; "zh-Hant" -> monitorTw[key]; "ja" -> monitorJa[key]; else -> monitorEn[key] }
         val n=when(loc) { "zh-Hans" -> newZh[key]; "zh-Hant" -> newTw[key]; "ja" -> newJa[key]; else -> newEn[key] }
         val widget=when(loc) { "zh-Hans" -> widgetZh[key]; "zh-Hant" -> widgetTw[key]; "ja" -> widgetJa[key]; else -> widgetEn[key] }
-        return v ?: p ?: monitor ?: n ?: widget ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: key
+        val motion=when(loc) { "zh-Hans" -> motionZh[key]; "zh-Hant" -> motionTw[key]; "ja" -> motionJa[key]; else -> motionEn[key] }
+        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: key
     }
 }

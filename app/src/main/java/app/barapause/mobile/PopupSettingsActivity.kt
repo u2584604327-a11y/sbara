@@ -85,7 +85,7 @@ class PopupSettingsActivity:Activity() {
         root.addView(Ui.text(this,L10n.t(this,"photo_hint"),13f))
         root.addView(Ui.section(this,L10n.t(this,"popup_motion")))
         root.addView(Ui.button(this,L10n.t(this,"motion_"+prefs.popupMotion)) {
-            val choices=listOf("still","breathe","bob")
+            val choices=listOf("peek","wave","bob","breathe","still")
             AlertDialog.Builder(this).setTitle(L10n.t(this,"popup_motion"))
                 .setSingleChoiceItems(choices.map { L10n.t(this,"motion_"+it) }.toTypedArray(),
                     choices.indexOf(prefs.popupMotion).coerceAtLeast(0)) { dialog,n ->
@@ -106,7 +106,7 @@ class PopupSettingsActivity:Activity() {
                 .setPositiveButton(L10n.t(this,"save")) { _,_ ->
                     prefs.popupPosition="bottom";prefs.popupSize="normal";prefs.popupColor="sage"
                     prefs.popupAnimation="spring";prefs.popupOpacity=100;prefs.popupMascot=true
-                    prefs.popupTitle="";prefs.popupBody="";prefs.popupImageUri="";prefs.popupMotion="breathe"
+                    prefs.popupTitle="";prefs.popupBody="";prefs.popupImageUri="";prefs.popupMotion="peek"
                     recreate()
                 }.show()
         })

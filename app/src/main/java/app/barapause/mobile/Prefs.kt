@@ -180,9 +180,9 @@ class Prefs(context: Context) {
         set(v) = p.edit().putString("popup_image_uri", v).apply()
 
     var popupMotion: String
-        get() = p.getString("popup_motion", "breathe") ?: "breathe"
+        get() = p.getString("popup_motion", "peek") ?: "breathe"
         set(v) = p.edit().putString("popup_motion",
-            if(v in setOf("still","breathe","bob")) v else "breathe").apply()
+            if(v in setOf("still","breathe","bob","peek","wave")) v else "peek").apply()
 
     fun putRule(rule: AppRule) {
         val all = rules().toMutableMap()
