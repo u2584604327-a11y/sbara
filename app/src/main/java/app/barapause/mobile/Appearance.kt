@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ColorDrawable
 
 data class Palette(val bg:Int,val card:Int,val text:Int,val muted:Int,val accent:Int,val stroke:Int,val button:Int)
 
@@ -24,6 +25,8 @@ object Appearance {
     }
     fun applyWindow(activity:Activity) {
         val p=palette(activity)
+        activity.window.setBackgroundDrawable(ColorDrawable(p.bg))
+        activity.window.decorView.setBackgroundColor(p.bg)
         activity.window.statusBarColor=p.bg
         activity.window.navigationBarColor=p.bg
         @Suppress("DEPRECATION")

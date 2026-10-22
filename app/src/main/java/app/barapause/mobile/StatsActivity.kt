@@ -5,12 +5,16 @@ import android.os.Bundle
 import android.widget.ScrollView
 
 class StatsActivity : Activity() {
+    private lateinit var page: ScrollView
+    private lateinit var store: Prefs
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Appearance.applyWindow(this)
         val prefs = Prefs(this)
+        store = prefs
         prefs.rollDayIfNeeded()
         val root = Ui.column(this)
+        root.minimumHeight = resources.displayMetrics.heightPixels
         root.addView(Ui.navHeader(this, L10n.t(this, "stats")))
         val blocks = prefs.blocksToday()
         val extensions = prefs.extensionsUsedToday()
@@ -30,6 +34,13 @@ class StatsActivity : Activity() {
             }
         }
         root.addView(Ui.text(this, L10n.t(this, "today_info"), 14f))
-        setContentView(ScrollView(this).apply { addView(root) })
+        page = ScrollView(this).apply { isFillViewport = true; setBackgroundColor(Appearance.palette(this@StatsActivity).bg); addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,store.savedScroll("stats")) }
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) store.saveScroll("stats",page.scrollY)
+        super.onPause()
     }
 }
