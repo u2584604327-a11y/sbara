@@ -92,6 +92,33 @@ class MainActivity : Activity() {
             }
         }
         root.addView(monitorSwitch)
+        root.addView(Ui.button(this, L10n.t(this,"diagnostics")) {
+            val beat = prefs.monitorDiagnostic("heartbeat").toLongOrNull() ?: 0L
+            val alive = beat > 0 && System.currentTimeMillis() - beat < 10_000L
+            val report = (if (alive) L10n.t(this,"diag_running") else L10n.t(this,"diag_stopped")) +
+                "\n" + L10n.t(this,"diag_fg") + ": " + prefs.monitorDiagnostic("foreground") +
+                "\n" + L10n.t(this,"diag_elapsed") + ": " + prefs.monitorDiagnostic("seconds") + "s" +
+                "\n" + L10n.t(this,"diag_reason") + ": " + prefs.monitorDiagnostic("reason") +
+                "\n" + L10n.t(this,"diag_trigger") + ": " + prefs.monitorDiagnostic("last_trigger") +
+                "\n" + L10n.t(this,"diag_error") + ": " + prefs.monitorDiagnostic("error") +
+                "\n" + "Boot: " + prefs.monitorDiagnostic("boot_error")
+            android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"diagnostics"))
+                .setMessage(report).setPositiveButton("OK",null).show()
+        })
+        root.addView(Ui.button(this, L10n.t(this,"restart_monitor")) {
+            if (!PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
+                android.widget.Toast.makeText(this,L10n.t(this,"authorize_first"),android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                prefs.monitoringEnabled = true
+                try {
+                    startForegroundService(Intent(this, MonitoringService::class.java))
+                    refreshStatus()
+                } catch(e:Exception) {
+                    prefs.recordMonitorDiagnostic("error",e.javaClass.simpleName + ": " + (e.message ?: ""))
+                    android.widget.Toast.makeText(this,e.javaClass.simpleName,android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
         root.addView(Ui.button(this, L10n.t(this,"selected_apps")) { startActivity(Intent(this, AppPickerActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"settings")) { startActivity(Intent(this, SettingsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"stats")) { startActivity(Intent(this, StatsActivity::class.java)) })
