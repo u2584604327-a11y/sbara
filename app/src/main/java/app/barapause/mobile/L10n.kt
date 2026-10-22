@@ -200,10 +200,42 @@ object L10n {
         "popup_reset" to "初期設定に戻す", "popup_example_app" to "サンプルアプリ", "popup_close" to "プレビューを閉じる"
     )
 
+    private val monitorEn = mapOf(
+        "diagnostics" to "Monitoring diagnostics",
+        "restart_monitor" to "Restart monitoring",
+        "diag_running" to "Monitor heartbeat active",
+        "diag_stopped" to "Monitor heartbeat missing / stale",
+        "diag_fg" to "Detected app", "diag_elapsed" to "Current session",
+        "diag_reason" to "Monitor state", "diag_trigger" to "Last break trigger",
+        "diag_error" to "Last error"
+    )
+    private val monitorZh = mapOf(
+        "diagnostics" to "监控诊断", "restart_monitor" to "手动重启监控",
+        "diag_running" to "监控心跳正常", "diag_stopped" to "监控心跳失效或尚未启动",
+        "diag_fg" to "识别的前台 App", "diag_elapsed" to "本轮累计",
+        "diag_reason" to "监控状态", "diag_trigger" to "最近触发",
+        "diag_error" to "最近错误"
+    )
+    private val monitorTw = mapOf(
+        "diagnostics" to "監控診斷", "restart_monitor" to "手動重新啟動監控",
+        "diag_running" to "監控運作正常", "diag_stopped" to "監控停止或尚未啟動",
+        "diag_fg" to "前景 App", "diag_elapsed" to "本輪累計",
+        "diag_reason" to "監控狀態", "diag_trigger" to "最近觸發",
+        "diag_error" to "最近錯誤"
+    )
+    private val monitorJa = mapOf(
+        "diagnostics" to "監視診断", "restart_monitor" to "監視を再起動",
+        "diag_running" to "監視は稼働中", "diag_stopped" to "監視が停止・未起動",
+        "diag_fg" to "使用中のアプリ", "diag_elapsed" to "経過時間",
+        "diag_reason" to "監視状態", "diag_trigger" to "最後の通知",
+        "diag_error" to "最後のエラー"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
         val p=when(loc) { "zh-Hans" -> popupZh[key]; "zh-Hant" -> popupTw[key]; "ja" -> popupJa[key]; else -> popupEn[key] }
-        return v ?: p ?: en[key] ?: popupEn[key] ?: key
+        val monitor=when(loc) { "zh-Hans" -> monitorZh[key]; "zh-Hant" -> monitorTw[key]; "ja" -> monitorJa[key]; else -> monitorEn[key] }
+        return v ?: p ?: monitor ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: key
     }
 }
