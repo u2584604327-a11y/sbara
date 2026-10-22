@@ -24,6 +24,12 @@ import java.util.concurrent.Executors
  * app has no public search activity, copies the query and opens the app instead.
  */
 class QuickLaunchActivity : Activity() {
+    companion object {
+        const val ACTION_WIDGET_SEARCH = "app.barapause.widget.SEARCH"
+        const val ACTION_WIDGET_PICK = "app.barapause.widget.PICK"
+        const val ACTION_WIDGET_OPEN = "app.barapause.widget.OPEN"
+    }
+
     private data class App(val pkg:String,val name:String)
     private val worker=Executors.newSingleThreadExecutor()
     private var apps=listOf<App>()
@@ -37,10 +43,18 @@ class QuickLaunchActivity : Activity() {
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         Appearance.applyWindow(this)
+        val preferences=Prefs(this)
+        val saved=preferences.quickTargetPackage
+        if(saved.isNotBlank()) chosen=App(saved,preferences.quickTargetLabel.ifBlank { saved })
+        if(intent?.action==ACTION_WIDGET_OPEN && chosen!=null) {
+            val launch=packageManager.getLaunchIntentForPackage(chosen!!.pkg)
+            if(launch!=null && runCatching { startActivity(launch) }.isSuccess) { finish();return }
+        }
         val root=Ui.column(this)
         root.addView(Ui.navHeader(this,L10n.t(this,"quick_search")))
         chosenLabel=Ui.text(this,L10n.t(this,"choose_app"),16f)
         root.addView(chosenLabel)
+        chosen?.let { chosenLabel.text=L10n.t(this,"choose_app")+": "+it.name }
         search=EditText(this).apply {
             hint=L10n.t(this@QuickLaunchActivity,"quick_search_hint")
             setSingleLine(true)
@@ -72,7 +86,21 @@ class QuickLaunchActivity : Activity() {
         root.addView(scrolling)
         page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@QuickLaunchActivity).bg);addView(root) }
         setContentView(page)
-        page.post { page.scrollTo(0,Prefs(this).savedScroll("quick")) }
+        if(intent?.action==ACTION_WIDGET_SEARCH) {
+            keyword.post {
+                keyword.requestFocus()
+                val keyboard=getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                keyboard.showSoftInput(keyword,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            }
+        } else if(intent?.action==ACTION_WIDGET_PICK) {
+            search.post {
+                search.requestFocus()
+                val keyboard=getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                keyboard.showSoftInput(search,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            }
+        } else {
+            page.post { page.scrollTo(0,Prefs(this).savedScroll("quick")) }
+        }
         worker.execute {
             val q=Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
             val found=packageManager.queryIntentActivities(q,0)
@@ -110,6 +138,11 @@ class QuickLaunchActivity : Activity() {
                 })
                 row.setOnClickListener {
                     chosen=app
+                    Prefs(this).apply {
+                        quickTargetPackage=app.pkg
+                        quickTargetLabel=app.name
+                    }
+                    WidgetUpdater.refresh(this)
                     chosenLabel.text=L10n.t(this,"choose_app")+": "+app.name
                     // Don't rebuild while typing: keep IME open and cursor position.
                 }

@@ -294,12 +294,34 @@ object L10n {
         "remaining" to "残り", "break_remaining" to "休憩残り", "not_monitoring" to "制限アプリは未使用"
     );
 
+    private val widgetEn=mapOf(
+        "add_widget" to "Add home screen search widget",
+        "widget_manual" to "Long-press desktop → Widgets / More widgets → BaraPause",
+        "quick_search_widget" to "Tap search to enter keywords"
+    )
+    private val widgetZh=mapOf(
+        "add_widget" to "添加桌面原子 / 搜索组件",
+        "widget_manual" to "长按桌面 → 小组件 / 原子组件 → 更多组件 → BaraPause",
+        "quick_search_widget" to "点击搜索框输入关键词"
+    )
+    private val widgetTw=mapOf(
+        "add_widget" to "加入桌面搜尋小工具",
+        "widget_manual" to "長按桌面 → 小工具 / 更多元件 → BaraPause",
+        "quick_search_widget" to "點擊搜尋以輸入關鍵字"
+    )
+    private val widgetJa=mapOf(
+        "add_widget" to "ホーム画面の検索ウィジェットを追加",
+        "widget_manual" to "ホーム画面を長押し → ウィジェット → BaraPause",
+        "quick_search_widget" to "タップして検索語を入力"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
         val p=when(loc) { "zh-Hans" -> popupZh[key]; "zh-Hant" -> popupTw[key]; "ja" -> popupJa[key]; else -> popupEn[key] }
         val monitor=when(loc) { "zh-Hans" -> monitorZh[key]; "zh-Hant" -> monitorTw[key]; "ja" -> monitorJa[key]; else -> monitorEn[key] }
         val n=when(loc) { "zh-Hans" -> newZh[key]; "zh-Hant" -> newTw[key]; "ja" -> newJa[key]; else -> newEn[key] }
-        return v ?: p ?: monitor ?: n ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: key
+        val widget=when(loc) { "zh-Hans" -> widgetZh[key]; "zh-Hant" -> widgetTw[key]; "ja" -> widgetJa[key]; else -> widgetEn[key] }
+        return v ?: p ?: monitor ?: n ?: widget ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: key
     }
 }
