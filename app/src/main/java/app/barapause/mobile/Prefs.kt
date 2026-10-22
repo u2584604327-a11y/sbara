@@ -60,6 +60,39 @@ class Prefs(context: Context) {
         get() = p.getBoolean("grid_mode", false)
         set(v) = p.edit().putBoolean("grid_mode", v).apply()
 
+
+    var popupPosition: String
+        get() = p.getString("popup_position", "bottom") ?: "bottom"
+        set(v) = p.edit().putString("popup_position", if (v in setOf("top","middle","bottom")) v else "bottom").apply()
+
+    var popupSize: String
+        get() = p.getString("popup_size", "normal") ?: "normal"
+        set(v) = p.edit().putString("popup_size", if (v=="compact") v else "normal").apply()
+
+    var popupColor: String
+        get() = p.getString("popup_color", "sage") ?: "sage"
+        set(v) = p.edit().putString("popup_color", if (v in setOf("sage","peach","lavender")) v else "sage").apply()
+
+    var popupAnimation: String
+        get() = p.getString("popup_animation", "spring") ?: "spring"
+        set(v) = p.edit().putString("popup_animation", if (v in setOf("spring","fade","none")) v else "spring").apply()
+
+    var popupOpacity: Int
+        get() = p.getInt("popup_opacity", 100).coerceIn(70,100)
+        set(v) = p.edit().putInt("popup_opacity", v.coerceIn(70,100)).apply()
+
+    var popupMascot: Boolean
+        get() = p.getBoolean("popup_mascot", true)
+        set(v) = p.edit().putBoolean("popup_mascot", v).apply()
+
+    var popupTitle: String
+        get() = p.getString("popup_title", "") ?: ""
+        set(v) = p.edit().putString("popup_title", v.trim().take(56)).apply()
+
+    var popupBody: String
+        get() = p.getString("popup_body", "") ?: ""
+        set(v) = p.edit().putString("popup_body", v.trim().take(140)).apply()
+
     fun rules(): Map<String, AppRule> {
         val raw = p.getString("rules", "{}") ?: "{}"
         val obj = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
