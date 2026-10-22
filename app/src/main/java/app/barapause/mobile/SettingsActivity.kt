@@ -70,7 +70,7 @@ class SettingsActivity : Activity() {
         root.addView(Ui.button(this,tr("language")+": "+tr(langKeys[langs.indexOf(prefs.language).coerceAtLeast(0)])) {
             AlertDialog.Builder(this).setTitle(tr("language"))
                 .setSingleChoiceItems(langKeys.map { tr(it) }.toTypedArray(),langs.indexOf(prefs.language).coerceAtLeast(0)) { dialog,id ->
-                    prefs.language=langs[id];dialog.dismiss();recreate()
+                    prefs.language=langs[id];WidgetUpdater.refresh(this);dialog.dismiss();recreate()
                 }.show()
         })
         root.addView(Ui.button(this,tr("popup_customize")) {

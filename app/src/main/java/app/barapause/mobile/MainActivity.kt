@@ -65,6 +65,7 @@ class MainActivity : Activity() {
             android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"language"))
                 .setSingleChoiceItems(keys.map { L10n.t(this,it) }.toTypedArray(),codes.indexOf(prefs.language)) { d,n ->
                     prefs.language=codes[n]
+                    WidgetUpdater.refresh(this)
                     d.dismiss()
                     render()
                 }.show()
