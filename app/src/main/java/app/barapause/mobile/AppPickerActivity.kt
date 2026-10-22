@@ -188,11 +188,11 @@ class AppPickerActivity : Activity() {
             text=app.label; textSize=15f; setTypeface(typeface,Typeface.BOLD);setTextColor(p.text);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END
         })
         detail.addView(TextView(this).apply {
-            text=duration(rule?.limitSeconds ?:1200);textSize=12f;setTextColor(p.muted)
+            text=duration(prefs.ruleLimitSeconds(app.pkg,rule?.limitSeconds ?:1200));textSize=12f;setTextColor(p.muted)
         })
         row.addView(detail,LinearLayout.LayoutParams(0,-2,1f))
         val time=TextView(this).apply {
-            text=duration(rule?.limitSeconds ?: 1200)+"  ✎"
+            text=duration(prefs.ruleLimitSeconds(app.pkg,rule?.limitSeconds ?:1200))+"  ✎"
             textSize=13f;setTextColor(p.text)
             setPadding(Ui.dp(this@AppPickerActivity,8),Ui.dp(this@AppPickerActivity,13),Ui.dp(this@AppPickerActivity,8),Ui.dp(this@AppPickerActivity,13))
             background=android.graphics.drawable.GradientDrawable().apply {
@@ -291,7 +291,12 @@ class AppPickerActivity : Activity() {
 
     private fun saveDuration(app:Installed,seconds:Int) {
         val prev=prefs.rules()[app.pkg]
-        prefs.putRule(AppRule(app.pkg,app.label,(seconds/60).coerceAtLeast(1),prev?.enabled ?: true,seconds))
+        if (prefs.testMode && seconds<=60) {
+            if (prev==null) prefs.putRule(AppRule(app.pkg,app.label,20,true,1200))
+            prefs.setTestLimitSeconds(app.pkg,seconds)
+        } else {
+            prefs.putRule(AppRule(app.pkg,app.label,(seconds/60).coerceAtLeast(1),prev?.enabled ?: true,seconds))
+        }
         renderItems()
     }
 
