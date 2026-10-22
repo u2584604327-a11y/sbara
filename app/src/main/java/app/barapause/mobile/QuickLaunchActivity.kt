@@ -32,6 +32,7 @@ class QuickLaunchActivity : Activity() {
     private lateinit var search:EditText
     private lateinit var keyword:EditText
     private lateinit var chosenLabel:TextView
+    private lateinit var page:ScrollView
 
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +70,9 @@ class QuickLaunchActivity : Activity() {
         val scrolling=ScrollView(this)
         scrolling.addView(list)
         root.addView(scrolling)
-        setContentView(ScrollView(this).apply { addView(root) })
+        page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@QuickLaunchActivity).bg);addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,Prefs(this).savedScroll("quick")) }
         worker.execute {
             val q=Intent(Intent.ACTION_MAIN).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
             val found=packageManager.queryIntentActivities(q,0)
@@ -151,6 +154,11 @@ class QuickLaunchActivity : Activity() {
             clipboard.setPrimaryClip(ClipData.newPlainText("BaraPause query",query))
         }
         launchSelected()
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) Prefs(this).saveScroll("quick",page.scrollY)
+        super.onPause()
     }
 
     override fun onDestroy() {

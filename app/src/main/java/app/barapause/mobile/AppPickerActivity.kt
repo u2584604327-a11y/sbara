@@ -47,6 +47,8 @@ class AppPickerActivity : Activity() {
         super.onCreate(savedInstanceState)
         Appearance.applyWindow(this)
         prefs = Prefs(this)
+        category = prefs.pickerCategory
+        query = prefs.pickerQuery
         val root = Ui.column(this)
         root.addView(Ui.navHeader(this, L10n.t(this,"selected_apps")))
         root.addView(Ui.text(this,L10n.t(this,"apps_intro")+" · "+L10n.t(this,"bulk_scope"),13f))
@@ -67,6 +69,7 @@ class AppPickerActivity : Activity() {
                 override fun afterTextChanged(s: Editable?) {}
             })
         }
+        search.setText(query)
         root.addView(search)
         bulkRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -109,8 +112,9 @@ class AppPickerActivity : Activity() {
         renderChips()
         container=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         root.addView(container)
-        scrollView = ScrollView(this).apply { addView(root) }
+        scrollView = ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@AppPickerActivity).bg);addView(root) }
         setContentView(scrollView)
+        scrollView.post { scrollView.scrollTo(0,prefs.savedScroll("picker")) }
 
         summary.text="…"
         bg.execute {
@@ -155,7 +159,7 @@ class AppPickerActivity : Activity() {
                     cornerRadius=Ui.dp(this@AppPickerActivity,18).toFloat()
                     setColor(if(category==id) colors.accent else colors.button)
                 }
-                setOnClickListener { category=id;renderChips();renderItems() }
+                setOnClickListener { category=id;prefs.pickerCategory=id;renderChips();renderItems() }
             }
             chips.addView(v,LinearLayout.LayoutParams(-2,-2).apply {
                 marginEnd=Ui.dp(this@AppPickerActivity,6)
@@ -360,6 +364,11 @@ class AppPickerActivity : Activity() {
             prefs.putRule(AppRule(app.pkg,app.label,(seconds/60).coerceAtLeast(1),prev?.enabled ?: true,seconds))
         }
         renderItems()
+    }
+
+    override fun onPause() {
+        if (::scrollView.isInitialized) prefs.saveScroll("picker",scrollView.scrollY)
+        super.onPause()
     }
 
     override fun onDestroy() {

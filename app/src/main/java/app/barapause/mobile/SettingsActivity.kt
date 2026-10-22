@@ -14,6 +14,7 @@ import android.widget.Toast
 import java.util.Locale
 
 class SettingsActivity : Activity() {
+    private lateinit var page: ScrollView
     private lateinit var prefs: Prefs
     private var taps=0
 
@@ -87,7 +88,14 @@ class SettingsActivity : Activity() {
         }
         root.addView(version)
         if(prefs.testMode) root.addView(Ui.text(this,tr("test_warning"),14f))
-        setContentView(ScrollView(this).apply { addView(root) })
+        page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@SettingsActivity).bg);addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,prefs.savedScroll("settings")) }
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) prefs.saveScroll("settings",page.scrollY)
+        super.onPause()
     }
 
     private fun chooseDuration(title:String,originalSeconds:Int,maxMinutes:Int,save:(Int)->Unit) {

@@ -16,6 +16,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 
 class PopupSettingsActivity:Activity() {
+    private lateinit var page: ScrollView
     private val PICK_IMAGE = 214
 
     private lateinit var prefs:Prefs
@@ -110,7 +111,9 @@ class PopupSettingsActivity:Activity() {
                 }.show()
         })
 
-        setContentView(ScrollView(this).apply { addView(root) })
+        page=ScrollView(this).apply { isFillViewport=true;setBackgroundColor(Appearance.palette(this@PopupSettingsActivity).bg);addView(root) }
+        setContentView(page)
+        page.post { page.scrollTo(0,prefs.savedScroll("popup")) }
     }
 
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
@@ -132,6 +135,11 @@ class PopupSettingsActivity:Activity() {
         } catch(e:Exception) {
             Toast.makeText(this,e.javaClass.simpleName,Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onPause() {
+        if (::page.isInitialized) prefs.saveScroll("popup",page.scrollY)
+        super.onPause()
     }
 
     private fun choose(key:String,options:List<String>,now:String,save:(String)->Unit) {
