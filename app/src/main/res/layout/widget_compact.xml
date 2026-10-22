@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:padding="12dp"
+    android:orientation="vertical" android:gravity="center"
+    android:background="@drawable/widget_surface">
+    <ImageView android:layout_width="50dp" android:layout_height="50dp"
+        android:src="@drawable/capybara_mascot" android:contentDescription="@string/app_name"/>
+    <TextView android:id="@+id/widget_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="BaraPause" android:gravity="center" android:textSize="15sp"
+        android:textStyle="bold" android:textColor="#382F27"/>
+    <TextView android:id="@+id/widget_target"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center" android:maxLines="1" android:ellipsize="end"
+        android:text="Tap to search" android:textSize="11sp" android:textColor="#526E4C"/>
+</LinearLayout>
