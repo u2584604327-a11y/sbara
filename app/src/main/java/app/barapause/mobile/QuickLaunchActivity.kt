@@ -64,7 +64,7 @@ class QuickLaunchActivity : Activity() {
         root.addView(Ui.button(this,L10n.t(this,"launch_app")) { launchSelected() })
         root.addView(Ui.button(this,L10n.t(this,"search_in_app")) { searchSelected() })
         root.addView(Ui.button(this,L10n.t(this,"copy_and_open")) { copyAndOpen() })
-        root.addView(Ui.text(this,L10n.t(this,"search_fallback"),12f))
+        root.addView(Ui.text(this,L10n.t(this,"quick_search_explain"),12f))
         list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val scrolling=ScrollView(this)
         scrolling.addView(list)
