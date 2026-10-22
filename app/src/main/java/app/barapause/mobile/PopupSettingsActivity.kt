@@ -163,11 +163,13 @@ class PopupSettingsActivity:Activity() {
     }
 
     private fun preview() {
-        val card=OverlayController(this).previewCard(L10n.t(this,"popup_example_app"))
+        val renderer=OverlayController(this)
+        val card=renderer.previewCard(L10n.t(this,"popup_example_app"))
         val d=AlertDialog.Builder(this)
             .setView(card)
             .setPositiveButton(L10n.t(this,"popup_close"),null)
             .create()
+        d.setOnDismissListener { renderer.hide() }
         d.show()
         d.window?.setBackgroundDrawableResource(android.R.color.transparent)
     }
