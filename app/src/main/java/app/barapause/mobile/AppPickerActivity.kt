@@ -232,7 +232,7 @@ class AppPickerActivity : Activity() {
                 textSize=12.5f;gravity=Gravity.CENTER;setTextColor(p.text)
             })
             addView(TextView(this@AppPickerActivity).apply {
-                text=(if(selected) "✓ " else "")+duration(rule?.limitSeconds ?:1200)
+                text=(if(selected) "✓ " else "")+duration(prefs.ruleLimitSeconds(app.pkg,rule?.limitSeconds ?:1200))
                 textSize=11f;gravity=Gravity.CENTER;setTextColor(p.accent)
             })
             setOnClickListener { changeEnabled(app,!selected) }
