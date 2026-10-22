@@ -20,7 +20,7 @@ class PopupSettingsActivity:Activity() {
         Appearance.applyWindow(this)
         prefs=Prefs(this)
         val root=Ui.column(this)
-        root.addView(Ui.title(this,L10n.t(this,"popup_customize")))
+        root.addView(Ui.navHeader(this,L10n.t(this,"popup_customize")))
         root.addView(Ui.text(this,L10n.t(this,"popup_explain"),14f))
         root.addView(Ui.button(this,L10n.t(this,"popup_preview")) { preview() })
 

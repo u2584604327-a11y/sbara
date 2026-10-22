@@ -11,7 +11,7 @@ class StatsActivity : Activity() {
         val prefs = Prefs(this)
         prefs.rollDayIfNeeded()
         val root = Ui.column(this)
-        root.addView(Ui.title(this, L10n.t(this, "stats")))
+        root.addView(Ui.navHeader(this, L10n.t(this, "stats")))
         val blocks = prefs.blocksToday()
         val extensions = prefs.extensionsUsedToday()
         val maxExt = prefs.maxExtensionsPerDay

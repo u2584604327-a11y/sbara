@@ -27,7 +27,7 @@ class SettingsActivity : Activity() {
 
     private fun render() {
         val root=Ui.column(this)
-        root.addView(Ui.title(this,tr("settings")))
+        root.addView(Ui.navHeader(this,tr("settings")))
         root.addView(Ui.section(this,tr("break")))
         root.addView(Ui.button(this,tr("break")+": "+fmtDuration(prefs.effectiveBreakSeconds())) {
             chooseDuration(tr("break"),prefs.breakSeconds, 60) { if(prefs.testMode) prefs.testBreakSeconds=it else prefs.breakSeconds=it;recreate() }
