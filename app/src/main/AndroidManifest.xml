@@ -22,6 +22,7 @@
         android:label="BaraPause"
         android:theme="@style/AppTheme">
 
+        <activity android:name=".PopupSettingsActivity" android:exported="false" />
         <activity android:name=".StatsActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".AppPickerActivity" android:exported="false" />

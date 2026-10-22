@@ -10,13 +10,22 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+
 
 class MonitoringService : Service() {
-    private val executor = Executors.newSingleThreadScheduledExecutor()
-    private var task: ScheduledFuture<*>? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val ticker = object : Runnable {
+        override fun run() {
+            try { tick() } catch (e: Exception) {
+                Log.e("BaraPause", "Monitor tick error", e)
+                if (::prefs.isInitialized) prefs.recordMonitorDiagnostic("error", e.javaClass.simpleName + ": " + (e.message ?: ""))
+            }
+            handler.postDelayed(this, 1000L)
+        }
+    }
     private lateinit var prefs: Prefs
     private lateinit var detector: ForegroundAppDetector
     private lateinit var overlay: OverlayController
@@ -36,23 +45,36 @@ class MonitoringService : Service() {
             startForeground(1001, notification)
         }
         lastTickElapsed = SystemClock.elapsedRealtime()
-        task = executor.scheduleAtFixedRate({ tickSafely() }, 0, 1, TimeUnit.SECONDS)
+        prefs.recordMonitorDiagnostic("last_start", System.currentTimeMillis().toString())
+        handler.post(ticker)
     }
 
-    private fun tickSafely() {
-        runCatching { tick() }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!prefs.monitoringEnabled) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        prefs.recordMonitorDiagnostic("task_removed", System.currentTimeMillis().toString())
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun tick() {
         if (!prefs.monitoringEnabled || !PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
             overlay.hide()
+            prefs.recordMonitorDiagnostic("reason", "permission_or_switch_disabled")
             return
         }
+        prefs.recordMonitorDiagnostic("heartbeat", System.currentTimeMillis().toString())
         val pm = getSystemService(POWER_SERVICE) as PowerManager
         if (!pm.isInteractive) {
             overlay.hide()
             lastPkg = null
             lastTickElapsed = SystemClock.elapsedRealtime()
+            prefs.recordMonitorDiagnostic("reason", "screen_off")
             return
         }
 
@@ -60,11 +82,13 @@ class MonitoringService : Service() {
         val delta = (nowElapsed - lastTickElapsed).coerceIn(0L, 2_000L)
         lastTickElapsed = nowElapsed
         val currentPkg = detector.currentPackage()
+        prefs.recordMonitorDiagnostic("foreground", currentPkg ?: "(unknown)")
         val rule = currentPkg?.let { prefs.rules()[it] }
 
         if (rule == null || !rule.enabled || currentPkg == packageName) {
             overlay.hide()
             lastPkg = currentPkg
+            prefs.recordMonitorDiagnostic("reason", if(currentPkg == null) "foreground_unknown" else "not_limited")
             return
         }
 
@@ -73,6 +97,7 @@ class MonitoringService : Service() {
             prefs.addDailyUsage(currentPkg, delta)
         }
         lastPkg = currentPkg
+        prefs.recordMonitorDiagnostic("seconds", (prefs.sessionMs(currentPkg) / 1000L).toString())
 
         val nowWall = System.currentTimeMillis()
         val study = prefs.isStudyModeActive()
@@ -82,29 +107,32 @@ class MonitoringService : Service() {
             cooldownUntil = 0L
         }
 
-        val effectiveLimit = RuleMath.effectiveLimitMs(rule.limitMinutes, study) + prefs.bonusMs(currentPkg)
+        val effectiveLimit = ((prefs.ruleLimitSeconds(currentPkg, rule.limitSeconds) * 1000L) / if (study) 2L else 1L).coerceAtLeast(1000L) + prefs.bonusMs(currentPkg)
         if (cooldownUntil <= 0 && prefs.sessionMs(currentPkg) >= effectiveLimit) {
-            cooldownUntil = nowWall + prefs.breakMinutes * 60_000L
+            cooldownUntil = nowWall + prefs.effectiveBreakSeconds() * 1000L
             prefs.setCooldownUntil(currentPkg, cooldownUntil)
             prefs.incrementBlocks()
+            prefs.recordMonitorDiagnostic("last_trigger", currentPkg + "@" + nowWall)
         }
 
         if (cooldownUntil > nowWall) {
+            prefs.recordMonitorDiagnostic("reason", "break_active")
             val remaining = cooldownUntil - nowWall
             overlay.show(
                 packageName = currentPkg,
                 appLabel = rule.label,
                 remainingMs = remaining,
                 canExtend = prefs.canExtend(study),
-                extensionMinutes = prefs.extensionMinutes
+                extensionSeconds = prefs.effectiveExtensionSeconds()
             ) {
                 if (prefs.consumeExtension()) {
-                    prefs.addBonusMs(currentPkg, prefs.extensionMinutes * 60_000L)
+                    prefs.addBonusMs(currentPkg, prefs.effectiveExtensionSeconds() * 1000L)
                     prefs.setCooldownUntil(currentPkg, 0L)
                     overlay.hide()
                 }
             }
         } else {
+            prefs.recordMonitorDiagnostic("reason", "counting")
             overlay.hide()
         }
     }
@@ -125,16 +153,16 @@ class MonitoringService : Service() {
         val builder = android.app.Notification.Builder(this, "monitor")
         return builder
             .setSmallIcon(R.drawable.ic_stat_barapause)
-            .setContentTitle("BaraPause 正在轻轻守门")
-            .setContentText("只统计你选择的 App；提醒与数据都留在本机")
+            .setContentTitle(L10n.t(this,"service_title"))
+            .setContentText(L10n.t(this,"service_desc"))
             .setOngoing(true)
             .setContentIntent(pi)
             .build()
     }
 
     override fun onDestroy() {
-        task?.cancel(true)
-        executor.shutdownNow()
+        handler.removeCallbacks(ticker)
+        if (::prefs.isInitialized) prefs.recordMonitorDiagnostic("last_destroy", System.currentTimeMillis().toString())
         overlay.hide()
         super.onDestroy()
     }

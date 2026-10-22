@@ -19,12 +19,13 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        Appearance.applyWindow(this)
         render()
     }
 
     override fun onResume() {
         super.onResume()
-        if (::statusText.isInitialized) refreshStatus()
+        if (::statusText.isInitialized) { Appearance.applyWindow(this); render() }
     }
 
     private fun render() {
@@ -43,33 +44,33 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), 0, 0, 0)
             addView(Ui.title(this@MainActivity, "BaraPause"))
-            addView(Ui.text(this@MainActivity, "可爱地打断无意识刷手机，而不是把手机锁死。", 14.5f))
+            addView(Ui.text(this@MainActivity, L10n.t(this@MainActivity,"home_desc"), 14.5f))
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         root.addView(hero)
 
         statusText = Ui.text(this, "", 14.5f)
         root.addView(statusText)
 
-        root.addView(Ui.section(this, "必要权限"))
+        root.addView(Ui.section(this, L10n.t(this,"permissions")))
         root.addView(Ui.text(this,
-            "为了判断你正在使用哪个 App，需要“使用情况访问权限”；为了在其他 App 上方显示底部提醒卡片，需要“显示在其他 App 上层”。BaraPause 不使用无障碍服务。",
+            L10n.t(this,"permission_detail"),
             13.5f
         ))
-        root.addView(Ui.button(this, "① 授予使用情况访问权限") {
+        root.addView(Ui.button(this, "① "+L10n.t(this,"usage_permission")) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         })
-        root.addView(Ui.button(this, "② 授予弹窗显示权限") {
+        root.addView(Ui.button(this, "② "+L10n.t(this,"overlay_permission")) {
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
         })
         if (Build.VERSION.SDK_INT >= 33) {
-            root.addView(Ui.button(this, "③ 允许常驻监控通知（可选显示）") {
+            root.addView(Ui.button(this, "③ "+L10n.t(this,"notification_permission")) {
                 requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 7)
             })
         }
 
-        root.addView(Ui.section(this, "守门"))
+        root.addView(Ui.section(this, L10n.t(this,"status")))
         val monitorSwitch = Switch(this).apply {
-            text = "启用 BaraPause"
+            text = L10n.t(this@MainActivity,"monitor")
             textSize = 18f
             isChecked = prefs.monitoringEnabled
             setPadding(0, dp(18), 0, dp(8))
@@ -77,7 +78,7 @@ class MainActivity : Activity() {
                 if (checked && (!PermissionUtils.hasUsageAccess(this@MainActivity) || !PermissionUtils.hasOverlay(this@MainActivity))) {
                     isChecked = false
                     prefs.monitoringEnabled = false
-                    refreshStatus("先完成前两项系统授权。")
+                    refreshStatus(L10n.t(this@MainActivity,"authorize_first"))
                     return@setOnCheckedChangeListener
                 }
                 prefs.monitoringEnabled = checked
@@ -91,13 +92,41 @@ class MainActivity : Activity() {
             }
         }
         root.addView(monitorSwitch)
-        root.addView(Ui.button(this, "选择受限 App / 设置本轮上限") { startActivity(Intent(this, AppPickerActivity::class.java)) })
-        root.addView(Ui.button(this, "休息、延期与学习模式") { startActivity(Intent(this, SettingsActivity::class.java)) })
-        root.addView(Ui.button(this, "查看今日统计") { startActivity(Intent(this, StatsActivity::class.java)) })
-        root.addView(Ui.button(this, "打开系统电池优化设置") { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) })
+        root.addView(Ui.button(this, L10n.t(this,"diagnostics")) {
+            val beat = prefs.monitorDiagnostic("heartbeat").toLongOrNull() ?: 0L
+            val alive = beat > 0 && System.currentTimeMillis() - beat < 10_000L
+            val report = (if (alive) L10n.t(this,"diag_running") else L10n.t(this,"diag_stopped")) +
+                "\n" + L10n.t(this,"diag_fg") + ": " + prefs.monitorDiagnostic("foreground") +
+                "\n" + L10n.t(this,"diag_elapsed") + ": " + prefs.monitorDiagnostic("seconds") + "s" +
+                "\n" + L10n.t(this,"diag_reason") + ": " + prefs.monitorDiagnostic("reason") +
+                "\n" + L10n.t(this,"diag_trigger") + ": " + prefs.monitorDiagnostic("last_trigger") +
+                "\n" + L10n.t(this,"diag_error") + ": " + prefs.monitorDiagnostic("error") +
+                "\n" + "Boot: " + prefs.monitorDiagnostic("boot_error")
+            android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"diagnostics"))
+                .setMessage(report).setPositiveButton("OK",null).show()
+        })
+        root.addView(Ui.button(this, L10n.t(this,"restart_monitor")) {
+            if (!PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
+                android.widget.Toast.makeText(this,L10n.t(this,"authorize_first"),android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                prefs.monitoringEnabled = true
+                try {
+                    startForegroundService(Intent(this, MonitoringService::class.java))
+                    refreshStatus()
+                } catch(e:Exception) {
+                    prefs.recordMonitorDiagnostic("error",e.javaClass.simpleName + ": " + (e.message ?: ""))
+                    android.widget.Toast.makeText(this,e.javaClass.simpleName,android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+        root.addView(Ui.button(this, L10n.t(this,"selected_apps")) { startActivity(Intent(this, AppPickerActivity::class.java)) })
+        root.addView(Ui.button(this, L10n.t(this,"settings")) { startActivity(Intent(this, SettingsActivity::class.java)) })
+        root.addView(Ui.button(this, L10n.t(this,"stats")) { startActivity(Intent(this, StatsActivity::class.java)) })
+        root.addView(Ui.button(this, L10n.t(this,"popup_customize")) { startActivity(Intent(this, PopupSettingsActivity::class.java)) })
+        root.addView(Ui.button(this, L10n.t(this,"battery")) { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) })
 
-        root.addView(Ui.section(this, "隐私边界"))
-        root.addView(Ui.text(this, "不使用 AccessibilityService；不读取通知、键盘输入或屏幕内容；不联网、不建账号、不上传统计。", 13.5f))
+        root.addView(Ui.section(this, L10n.t(this,"privacy")))
+        root.addView(Ui.text(this, L10n.t(this,"privacy_detail"), 13.5f))
         setContentView(ScrollView(this).apply { addView(root) })
         refreshStatus()
     }
@@ -107,8 +136,8 @@ class MainActivity : Activity() {
         val rules = prefs.rules().values.count { it.enabled }
         val usage = if (PermissionUtils.hasUsageAccess(this)) "✓" else "✗"
         val overlay = if (PermissionUtils.hasOverlay(this)) "✓" else "✗"
-        val monitor = if (prefs.monitoringEnabled) "运行中" else "未启用"
-        statusText.text = "使用情况 $usage   弹窗权限 $overlay\n受限 App：$rules   监控：$monitor   今日提醒：${prefs.blocksToday()}" +
+        val monitor = if (prefs.monitoringEnabled) L10n.t(this,"monitor_on") else L10n.t(this,"monitor_off")
+        statusText.text = L10n.t(this,"permissions")+": $usage / $overlay  ·  $monitor\n"+L10n.t(this,"summary_apps")+": $rules   "+L10n.t(this,"summary_blocks")+": ${prefs.blocksToday()}" +
             (extra?.let { "\n$it" } ?: "")
     }
 

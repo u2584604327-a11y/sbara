@@ -5,40 +5,53 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 
 /**
- * Incrementally tracks the last resumed foreground package.
- *
- * The original V1 queried only a short fixed lookback window. That fails when an app stays
- * foreground longer than the window because there may be no new resume event. This version
- * keeps the last known package and advances the query cursor on every poll.
+ * Reconstructs the last resumed activity from a 24h event history on initial startup,
+ * then advances through UsageEvents incrementally. A fixed 60-second lookback can fail
+ * when a target app has already been open for longer than that before monitoring starts.
  */
 class ForegroundAppDetector(context: Context) {
     private val usage = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-    private var cursorWallMs = System.currentTimeMillis() - 60_000L
-    private var currentPkg: String? = null
+    private var cursor = 0L
+    private var lastTime = Long.MIN_VALUE
+    private var lastEventIds = mutableSetOf<String>()
+    private var foreground: String? = null
+    private var foregroundActivity: String? = null
 
-    @Synchronized
-    fun currentPackage(now: Long = System.currentTimeMillis()): String? {
-        val start = cursorWallMs.coerceAtMost(now)
-        val events = usage.queryEvents(start, now) ?: return currentPkg
+    @Synchronized fun currentPackage(now: Long = System.currentTimeMillis()): String? {
+        if (cursor == 0L || now + 10_000L < cursor) {
+            cursor = (now - 86_400_000L).coerceAtLeast(0L)
+            lastTime = Long.MIN_VALUE
+            lastEventIds.clear()
+            foreground = null
+            foregroundActivity = null
+        }
+        val events = usage.queryEvents((cursor - 2_000L).coerceAtLeast(0L), now)
+            ?: return foreground
         val event = UsageEvents.Event()
-        var newestTimestamp = start
-
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.timeStamp < newestTimestamp) continue
-            newestTimestamp = event.timeStamp
+            if (event.timeStamp < lastTime) continue
+            if (event.timeStamp > lastTime) {
+                lastTime = event.timeStamp
+                lastEventIds.clear()
+            }
+            val id = "${event.eventType}:${event.packageName}:${event.className ?: ""}"
+            if (!lastEventIds.add(id)) continue
             when (event.eventType) {
-                UsageEvents.Event.ACTIVITY_RESUMED,
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> currentPkg = event.packageName
-
-                UsageEvents.Event.ACTIVITY_PAUSED,
-                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                    if (currentPkg == event.packageName) currentPkg = null
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    foreground = event.packageName
+                    foregroundActivity = event.className
+                }
+                UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    if (foreground == event.packageName &&
+                        (foregroundActivity == null || foregroundActivity == event.className)) {
+                        foreground = null
+                        foregroundActivity = null
+                    }
                 }
             }
         }
-
-        cursorWallMs = (now - 250L).coerceAtLeast(start)
-        return currentPkg
+        cursor = now
+        return foreground
     }
 }
