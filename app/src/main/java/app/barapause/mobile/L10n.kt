@@ -320,6 +320,23 @@ object L10n {
     private val motionTw=mapOf("motion_peek" to "探頭＋揮手","motion_wave" to "左右揮手")
     private val motionJa=mapOf("motion_peek" to "ひょっこり＋手を振る","motion_wave" to "手を振る")
 
+    private val statsEn=mapOf(
+        "stat_summary" to "Observed usage today", "stat_empty_hint" to "Pick apps to see local usage records and break reminders here.",
+        "stat_choose" to "Choose limited apps", "stat_apps" to "Usage by app", "stat_share_note" to "Bars show each app's share of observed use, not a daily limit."
+    )
+    private val statsZh=mapOf(
+        "stat_summary" to "今日已监测使用时长", "stat_empty_hint" to "选择受限 App 后，这里会显示本机统计和休息记录。",
+        "stat_choose" to "去选择受限 App", "stat_apps" to "应用使用情况", "stat_share_note" to "进度条表示各 App 占监测时长的比例，不是全天限额。"
+    )
+    private val statsTw=mapOf(
+        "stat_summary" to "今日監測使用時間", "stat_empty_hint" to "選擇受限 App 後，這裡將顯示本機統計資料。",
+        "stat_choose" to "選擇受限 App", "stat_apps" to "應用使用情況", "stat_share_note" to "比例條是已監測時間的分布，不是每日限額。"
+    )
+    private val statsJa=mapOf(
+        "stat_summary" to "今日の計測時間", "stat_empty_hint" to "制限するアプリを選ぶと、ここに使用記録が表示されます。",
+        "stat_choose" to "制限アプリを選ぶ", "stat_apps" to "アプリ別使用時間", "stat_share_note" to "バーは計測時間の構成比であり、1日の上限ではありません。"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
@@ -328,6 +345,7 @@ object L10n {
         val n=when(loc) { "zh-Hans" -> newZh[key]; "zh-Hant" -> newTw[key]; "ja" -> newJa[key]; else -> newEn[key] }
         val widget=when(loc) { "zh-Hans" -> widgetZh[key]; "zh-Hant" -> widgetTw[key]; "ja" -> widgetJa[key]; else -> widgetEn[key] }
         val motion=when(loc) { "zh-Hans" -> motionZh[key]; "zh-Hant" -> motionTw[key]; "ja" -> motionJa[key]; else -> motionEn[key] }
-        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: key
+        val stats=when(loc) { "zh-Hans" -> statsZh[key]; "zh-Hant" -> statsTw[key]; "ja" -> statsJa[key]; else -> statsEn[key] }
+        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: key
     }
 }
