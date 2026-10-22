@@ -5,6 +5,10 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.graphics.drawable.Drawable
+import android.util.LruCache
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.InputType
@@ -25,6 +29,9 @@ class AppPickerActivity : Activity() {
     private data class Installed(val pkg: String, val label: String, val category: String)
     private lateinit var prefs: Prefs
     private val bg = Executors.newSingleThreadExecutor()
+    private val searchHandler = Handler(Looper.getMainLooper())
+    private val iconCache = LruCache<String, Drawable.ConstantState>(96)
+    private val deferredRender = Runnable { if (!isFinishing && !isDestroyed) renderItems() }
     private var apps: List<Installed> = emptyList()
     private lateinit var container: LinearLayout
     private lateinit var summary: TextView
@@ -33,6 +40,7 @@ class AppPickerActivity : Activity() {
     private var category = "all"
     private val categories = listOf("all","selected","browser","social","video","ai","office","tools","other")
     private lateinit var chips: LinearLayout
+    private lateinit var scrollView: ScrollView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +62,7 @@ class AppPickerActivity : Activity() {
             setPadding(Ui.dp(this@AppPickerActivity,14),Ui.dp(this@AppPickerActivity,12),Ui.dp(this@AppPickerActivity,14),Ui.dp(this@AppPickerActivity,12))
             addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start:Int,count:Int,after:Int) {}
-                override fun onTextChanged(s: CharSequence?, start:Int,before:Int,count:Int) { query=s?.toString()?.trim()?.lowercase() ?: ""; renderItems() }
+                override fun onTextChanged(s: CharSequence?, start:Int,before:Int,count:Int) { query=s?.toString()?.trim()?.lowercase() ?: ""; searchHandler.removeCallbacks(deferredRender);searchHandler.postDelayed(deferredRender,130L) }
                 override fun afterTextChanged(s: Editable?) {}
             })
         }
@@ -81,7 +89,8 @@ class AppPickerActivity : Activity() {
         renderChips()
         container=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         root.addView(container)
-        setContentView(ScrollView(this).apply { addView(root) })
+        scrollView = ScrollView(this).apply { addView(root) }
+        setContentView(scrollView)
 
         summary.text="…"
         bg.execute {
@@ -145,6 +154,7 @@ class AppPickerActivity : Activity() {
         val rules=prefs.rules()
         val selected=rules.values.count { it.enabled }
         summary.text=L10n.t(this,"summary_apps")+": $selected   ·   "+apps.size
+        val oldScroll = if (::scrollView.isInitialized) scrollView.scrollY else 0
         container.removeAllViews()
         val filtered=apps.filter { app ->
             (query.isEmpty() || (app.label+" "+app.pkg).lowercase().contains(query)) &&
@@ -165,11 +175,20 @@ class AppPickerActivity : Activity() {
         } else {
             filtered.forEach { app -> container.addView(listCell(app,rules[app.pkg])) }
         }
+        if (::scrollView.isInitialized && query.isEmpty()) scrollView.post { scrollView.scrollTo(0, oldScroll) }
     }
 
     private fun icon(pkg:String,size:Int):ImageView=ImageView(this).apply {
-        try { setImageDrawable(packageManager.getApplicationIcon(pkg)) }
-        catch (_:Exception) { setImageResource(android.R.drawable.sym_def_app_icon) }
+        try {
+            var state=iconCache.get(pkg)
+            if (state == null) {
+                state=packageManager.getApplicationIcon(pkg).constantState
+                if (state != null) iconCache.put(pkg,state)
+            }
+            setImageDrawable(state?.newDrawable(resources)?.mutate() ?: packageManager.getApplicationIcon(pkg))
+        } catch (_: Exception) {
+            setImageResource(android.R.drawable.sym_def_app_icon)
+        }
         layoutParams=LinearLayout.LayoutParams(Ui.dp(this@AppPickerActivity,size),Ui.dp(this@AppPickerActivity,size))
         contentDescription=pkg
     }
@@ -301,7 +320,9 @@ class AppPickerActivity : Activity() {
     }
 
     override fun onDestroy() {
+        searchHandler.removeCallbacks(deferredRender)
         bg.shutdownNow()
+        iconCache.evictAll()
         super.onDestroy()
     }
 }

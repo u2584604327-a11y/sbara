@@ -19,7 +19,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="BaraPause"
+        android:label="BaraPause V1.2"
         android:theme="@style/AppTheme">
 
         <activity android:name=".PopupSettingsActivity" android:exported="false" />
