@@ -13,12 +13,12 @@ class Prefs(context: Context) {
         set(v) = p.edit().putBoolean("monitoring_enabled", v).apply()
 
     var breakMinutes: Int
-        get() = p.getInt("break_minutes", 5)
-        set(v) = p.edit().putInt("break_minutes", v.coerceIn(1, 60)).apply()
+        get() = (breakSeconds / 60).coerceAtLeast(1)
+        set(v) { breakSeconds = v.coerceIn(1, 60) * 60 }
 
     var extensionMinutes: Int
-        get() = p.getInt("extension_minutes", 5)
-        set(v) = p.edit().putInt("extension_minutes", v.coerceIn(1, 30)).apply()
+        get() = (extensionSeconds / 60).coerceAtLeast(1)
+        set(v) { extensionSeconds = v.coerceIn(1, 30) * 60 }
 
     var maxExtensionsPerDay: Int
         get() = p.getInt("max_extensions", 1)
@@ -36,6 +36,30 @@ class Prefs(context: Context) {
         get() = p.getInt("study_end", 22 * 60)
         set(v) = p.edit().putInt("study_end", v.coerceIn(0, 1439)).apply()
 
+    var breakSeconds: Int
+        get() = p.getInt("break_seconds", p.getInt("break_minutes", 5) * 60)
+        set(v) = p.edit().putInt("break_seconds", v.coerceIn(15, 3600)).apply()
+
+    var extensionSeconds: Int
+        get() = p.getInt("extension_seconds", p.getInt("extension_minutes", 5) * 60)
+        set(v) = p.edit().putInt("extension_seconds", v.coerceIn(15, 1800)).apply()
+
+    var theme: String
+        get() = p.getString("theme", "system") ?: "system"
+        set(v) = p.edit().putString("theme", v).apply()
+
+    var language: String
+        get() = p.getString("language", "system") ?: "system"
+        set(v) = p.edit().putString("language", v).apply()
+
+    var testMode: Boolean
+        get() = p.getBoolean("test_mode", false)
+        set(v) = p.edit().putBoolean("test_mode", v).apply()
+
+    var gridMode: Boolean
+        get() = p.getBoolean("grid_mode", false)
+        set(v) = p.edit().putBoolean("grid_mode", v).apply()
+
     fun rules(): Map<String, AppRule> {
         val raw = p.getString("rules", "{}") ?: "{}"
         val obj = runCatching { JSONObject(raw) }.getOrElse { JSONObject() }
@@ -48,7 +72,8 @@ class Prefs(context: Context) {
                 packageName = pkg,
                 label = r.optString("label", pkg),
                 limitMinutes = r.optInt("limit", 20).coerceIn(1, 240),
-                enabled = r.optBoolean("enabled", true)
+                enabled = r.optBoolean("enabled", true),
+                limitSeconds = r.optInt("seconds", r.optInt("limit", 20) * 60).coerceIn(30, 14400)
             )
         }
         return out
@@ -73,6 +98,7 @@ class Prefs(context: Context) {
                 put("label", r.label)
                 put("limit", r.limitMinutes)
                 put("enabled", r.enabled)
+                put("seconds", r.limitSeconds)
             })
         }
         p.edit().putString("rules", root.toString()).apply()
