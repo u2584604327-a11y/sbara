@@ -10,6 +10,12 @@
 
     <queries>
         <intent>
+            <action android:name="android.intent.action.SEARCH" />
+        </intent>
+        <intent>
+            <action android:name="com.google.android.gms.actions.SEARCH_ACTION" />
+        </intent>
+        <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
@@ -19,9 +25,10 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="BaraPause V1.2"
+        android:label="BaraPause"
         android:theme="@style/AppTheme">
 
+        <activity android:name=".QuickLaunchActivity" android:exported="false" />
         <activity android:name=".PopupSettingsActivity" android:exported="false" />
         <activity android:name=".StatsActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />

@@ -1,5 +1,14 @@
 package app.barapause.mobile
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.graphics.ImageDecoder
+import android.graphics.BitmapFactory
+import android.graphics.drawable.AnimatedImageDrawable
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.os.Build
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -24,6 +33,8 @@ class OverlayController(private val context: Context) {
     private var countdown: TextView? = null
     private var extendButton: Button? = null
     private var currentPkg: String? = null
+    private var mascotAnimator: ObjectAnimator? = null
+    private var mediaDrawable: Drawable? = null
 
     fun show(packageName: String, appLabel: String, remainingMs: Long, canExtend: Boolean,
              extensionSeconds: Int, onExtend: () -> Unit) {
@@ -102,11 +113,31 @@ class OverlayController(private val context: Context) {
         }
         val row=LinearLayout(context).apply { orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL }
         if(preferences.popupMascot) {
-            row.addView(ImageView(context).apply {
-                setImageResource(R.drawable.capybara_mascot)
-                layoutParams=LinearLayout.LayoutParams(dp(if(compact) 44 else 64),dp(if(compact) 44 else 64))
+            val mascotView=ImageView(context).apply {
+                scaleType=ImageView.ScaleType.FIT_CENTER
+                layoutParams=LinearLayout.LayoutParams(dp(if(compact) 60 else 88),dp(if(compact) 60 else 88))
                 contentDescription="BaraPause"
-            })
+            }
+            val drawable=loadCustomDrawable()
+            if(drawable!=null) {
+                mascotView.setImageDrawable(drawable)
+                mediaDrawable=drawable
+                (drawable as? Animatable)?.start()
+            } else mascotView.setImageResource(R.drawable.capybara_mascot)
+            if(preferences.popupMotion!="still") {
+                // Real Android animation, not just a still picture in an animated container.
+                mascotAnimator?.cancel()
+                mascotAnimator=when(preferences.popupMotion) {
+                    "bob" -> ObjectAnimator.ofFloat(mascotView,View.TRANSLATION_Y,0f,-dp(9).toFloat(),0f)
+                    else -> ObjectAnimator.ofFloat(mascotView,View.SCALE_Y,1f,1.055f,1f)
+                }.apply {
+                    duration=if(preferences.popupMotion=="bob") 1250L else 1800L
+                    repeatCount=ValueAnimator.INFINITE
+                    repeatMode=ValueAnimator.RESTART
+                    start()
+                }
+            }
+            row.addView(mascotView)
         }
         val labels=LinearLayout(context).apply {
             orientation=LinearLayout.VERTICAL
@@ -186,10 +217,40 @@ class OverlayController(private val context: Context) {
     }
 
     fun hide() {
+        mascotAnimator?.cancel()
+        mascotAnimator=null
+        (mediaDrawable as? Animatable)?.stop()
+        mediaDrawable=null
         root?.let {
             runCatching { it.animate().cancel();wm.removeView(it) }
         }
         root=null;countdown=null;extendButton=null;currentPkg=null
+    }
+
+    private fun loadCustomDrawable(): Drawable? {
+        val saved=preferences.popupImageUri
+        if(saved.isBlank()) return null
+        return runCatching {
+            val uri=Uri.parse(saved)
+            if(Build.VERSION.SDK_INT>=28) {
+                val source=ImageDecoder.createSource(context.contentResolver,uri)
+                ImageDecoder.decodeDrawable(source) { decoder, info, _ ->
+                    val w=info.size.width.coerceAtLeast(1)
+                    val h=info.size.height.coerceAtLeast(1)
+                    val ratio=(maxOf(w,h)/480f).coerceAtLeast(1f)
+                    decoder.setTargetSize((w/ratio).toInt().coerceAtLeast(1),(h/ratio).toInt().coerceAtLeast(1))
+                }
+            } else {
+                val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
+                context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it,null,bounds) }
+                val sample=(maxOf(bounds.outWidth,bounds.outHeight)/480).coerceAtLeast(1)
+                val options=BitmapFactory.Options().apply { inSampleSize=sample }
+                val bitmap=context.contentResolver.openInputStream(uri)?.use {
+                    BitmapFactory.decodeStream(it,null,options)
+                } ?: return@runCatching null
+                android.graphics.drawable.BitmapDrawable(context.resources,bitmap)
+            }
+        }.getOrNull()
     }
 
     private fun duration(seconds:Int):String=if(seconds%60==0)

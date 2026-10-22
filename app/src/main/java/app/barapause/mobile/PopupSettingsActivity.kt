@@ -3,6 +3,9 @@ package app.barapause.mobile
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import android.text.InputType
 import android.view.Gravity
 import android.widget.CheckBox
@@ -13,6 +16,8 @@ import android.widget.SeekBar
 import android.widget.TextView
 
 class PopupSettingsActivity:Activity() {
+    private val PICK_IMAGE = 214
+
     private lateinit var prefs:Prefs
 
     override fun onCreate(savedInstanceState:Bundle?) {
@@ -64,6 +69,28 @@ class PopupSettingsActivity:Activity() {
             setOnCheckedChangeListener { _,v -> prefs.popupMascot=v }
         })
 
+        root.addView(Ui.section(this,L10n.t(this,"popup_photo")))
+        root.addView(Ui.button(this,L10n.t(this,"choose_photo")) {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type="image/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }, PICK_IMAGE)
+        })
+        root.addView(Ui.button(this,L10n.t(this,"remove_photo")) {
+            prefs.popupImageUri=""
+            recreate()
+        })
+        root.addView(Ui.text(this,L10n.t(this,"photo_hint"),13f))
+        root.addView(Ui.section(this,L10n.t(this,"popup_motion")))
+        root.addView(Ui.button(this,L10n.t(this,"motion_"+prefs.popupMotion)) {
+            val choices=listOf("still","breathe","bob")
+            AlertDialog.Builder(this).setTitle(L10n.t(this,"popup_motion"))
+                .setSingleChoiceItems(choices.map { L10n.t(this,"motion_"+it) }.toTypedArray(),
+                    choices.indexOf(prefs.popupMotion).coerceAtLeast(0)) { dialog,n ->
+                    prefs.popupMotion=choices[n];dialog.dismiss();recreate()
+                }.show()
+        })
         root.addView(Ui.section(this,L10n.t(this,"popup_messages")))
         root.addView(Ui.button(this,L10n.t(this,"popup_title")) {
             enterText("popup_title",prefs.popupTitle,56) { prefs.popupTitle=it }
@@ -78,12 +105,33 @@ class PopupSettingsActivity:Activity() {
                 .setPositiveButton(L10n.t(this,"save")) { _,_ ->
                     prefs.popupPosition="bottom";prefs.popupSize="normal";prefs.popupColor="sage"
                     prefs.popupAnimation="spring";prefs.popupOpacity=100;prefs.popupMascot=true
-                    prefs.popupTitle="";prefs.popupBody=""
+                    prefs.popupTitle="";prefs.popupBody="";prefs.popupImageUri="";prefs.popupMotion="breathe"
                     recreate()
                 }.show()
         })
 
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
+        super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode!=PICK_IMAGE || resultCode!=RESULT_OK) return
+        val uri=data?.data ?: return
+        try {
+            // Keep read-only access after a reboot. Never copy private photos to cloud/storage.
+            contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val size=contentResolver.query(uri,arrayOf(android.provider.OpenableColumns.SIZE),null,null,null)?.use { c ->
+                if(c.moveToFirst() && !c.isNull(0)) c.getLong(0) else -1L
+            } ?: -1L
+            if(size>16L*1024*1024) {
+                Toast.makeText(this,"Image too large (16 MB max)",Toast.LENGTH_LONG).show()
+                return
+            }
+            prefs.popupImageUri=uri.toString()
+            recreate()
+        } catch(e:Exception) {
+            Toast.makeText(this,e.javaClass.simpleName,Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun choose(key:String,options:List<String>,now:String,save:(String)->Unit) {
