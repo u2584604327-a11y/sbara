@@ -20,8 +20,10 @@ class SplashActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Appearance.applyWindow(this)
+        val colors=Appearance.palette(this)
         val root = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(248, 242, 228))
+            setBackgroundColor(colors.bg)
         }
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -38,15 +40,15 @@ class SplashActivity : Activity() {
             text = "BaraPause"
             textSize = 31f
             setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.rgb(66, 51, 39))
+            setTextColor(colors.text)
             gravity = Gravity.CENTER
             alpha = 0f
             translationY = dp(12).toFloat()
         }
         val subtitle = TextView(this).apply {
-            text = "到点就歇一会儿"
+            text = L10n.t(this@SplashActivity,"home_desc")
             textSize = 15f
-            setTextColor(Color.rgb(108, 89, 72))
+            setTextColor(colors.muted)
             gravity = Gravity.CENTER
             alpha = 0f
             setPadding(0, dp(4), 0, 0)
