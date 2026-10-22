@@ -25,16 +25,16 @@
 - [x] No keyboard/screen capture
 - [x] No account/cloud sync
 
-## Runtime permissions
-- [x] Usage Access
-- [x] Draw over other apps
-- [x] Foreground service
-- [x] Optional Android 13+ notification permission
+## Build verification
+- [x] Core rule tests PASS 9/9
+- [x] Static privacy/XML audit PASS
+- [x] GitHub Actions Android build PASS
+- [x] APK artifact generated and downloaded
+- [x] APK ZIP integrity PASS
+- [x] APK SHA-256 recorded
 
-## Required runtime validation
-- [ ] GitHub Actions Android build PASS
-- [ ] APK artifact downloaded
-- [ ] Android 16 device install PASS
+## Device validation still required
+- [ ] Android 16 install PASS
 - [ ] Usage access runtime PASS
 - [ ] Overlay runtime PASS
 - [ ] 1-minute test rule triggers popup
