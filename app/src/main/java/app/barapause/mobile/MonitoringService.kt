@@ -84,9 +84,9 @@ class MonitoringService : Service() {
             cooldownUntil = 0L
         }
 
-        val effectiveLimit = ((rule.limitSeconds * 1000L) / if (study) 2L else 1L).coerceAtLeast(1000L) + prefs.bonusMs(currentPkg)
+        val effectiveLimit = ((prefs.ruleLimitSeconds(currentPkg, rule.limitSeconds) * 1000L) / if (study) 2L else 1L).coerceAtLeast(1000L) + prefs.bonusMs(currentPkg)
         if (cooldownUntil <= 0 && prefs.sessionMs(currentPkg) >= effectiveLimit) {
-            cooldownUntil = nowWall + prefs.breakSeconds * 1000L
+            cooldownUntil = nowWall + prefs.effectiveBreakSeconds() * 1000L
             prefs.setCooldownUntil(currentPkg, cooldownUntil)
             prefs.incrementBlocks()
         }
@@ -98,10 +98,10 @@ class MonitoringService : Service() {
                 appLabel = rule.label,
                 remainingMs = remaining,
                 canExtend = prefs.canExtend(study),
-                extensionSeconds = prefs.extensionSeconds
+                extensionSeconds = prefs.effectiveExtensionSeconds()
             ) {
                 if (prefs.consumeExtension()) {
-                    prefs.addBonusMs(currentPkg, prefs.extensionSeconds * 1000L)
+                    prefs.addBonusMs(currentPkg, prefs.effectiveExtensionSeconds() * 1000L)
                     prefs.setCooldownUntil(currentPkg, 0L)
                     overlay.hide()
                 }
@@ -127,8 +127,8 @@ class MonitoringService : Service() {
         val builder = android.app.Notification.Builder(this, "monitor")
         return builder
             .setSmallIcon(R.drawable.ic_stat_barapause)
-            .setContentTitle("BaraPause 正在轻轻守门")
-            .setContentText("只统计你选择的 App；提醒与数据都留在本机")
+            .setContentTitle(L10n.t(this,"service_title"))
+            .setContentText(L10n.t(this,"service_desc"))
             .setOngoing(true)
             .setContentIntent(pi)
             .build()
