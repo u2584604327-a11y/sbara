@@ -10,13 +10,19 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+
 
 class MonitoringService : Service() {
-    private val executor = Executors.newSingleThreadScheduledExecutor()
-    private var task: ScheduledFuture<*>? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val ticker = object : Runnable {
+        override fun run() {
+            try { tick() } catch (e: Exception) { Log.e("BaraPause", "Monitor tick error", e) }
+            handler.postDelayed(this, 1000L)
+        }
+    }
     private lateinit var prefs: Prefs
     private lateinit var detector: ForegroundAppDetector
     private lateinit var overlay: OverlayController
@@ -36,11 +42,7 @@ class MonitoringService : Service() {
             startForeground(1001, notification)
         }
         lastTickElapsed = SystemClock.elapsedRealtime()
-        task = executor.scheduleAtFixedRate({ tickSafely() }, 0, 1, TimeUnit.SECONDS)
-    }
-
-    private fun tickSafely() {
-        runCatching { tick() }
+        handler.post(ticker)
     }
 
     private fun tick() {
@@ -82,9 +84,9 @@ class MonitoringService : Service() {
             cooldownUntil = 0L
         }
 
-        val effectiveLimit = RuleMath.effectiveLimitMs(rule.limitMinutes, study) + prefs.bonusMs(currentPkg)
+        val effectiveLimit = ((rule.limitSeconds * 1000L) / if (study) 2L else 1L).coerceAtLeast(1000L) + prefs.bonusMs(currentPkg)
         if (cooldownUntil <= 0 && prefs.sessionMs(currentPkg) >= effectiveLimit) {
-            cooldownUntil = nowWall + prefs.breakMinutes * 60_000L
+            cooldownUntil = nowWall + prefs.breakSeconds * 1000L
             prefs.setCooldownUntil(currentPkg, cooldownUntil)
             prefs.incrementBlocks()
         }
@@ -96,10 +98,10 @@ class MonitoringService : Service() {
                 appLabel = rule.label,
                 remainingMs = remaining,
                 canExtend = prefs.canExtend(study),
-                extensionMinutes = prefs.extensionMinutes
+                extensionSeconds = prefs.extensionSeconds
             ) {
                 if (prefs.consumeExtension()) {
-                    prefs.addBonusMs(currentPkg, prefs.extensionMinutes * 60_000L)
+                    prefs.addBonusMs(currentPkg, prefs.extensionSeconds * 1000L)
                     prefs.setCooldownUntil(currentPkg, 0L)
                     overlay.hide()
                 }
@@ -133,8 +135,7 @@ class MonitoringService : Service() {
     }
 
     override fun onDestroy() {
-        task?.cancel(true)
-        executor.shutdownNow()
+        handler.removeCallbacks(ticker)
         overlay.hide()
         super.onDestroy()
     }
