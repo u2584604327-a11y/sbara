@@ -147,8 +147,63 @@ object L10n {
         "overlay_note" to "カードの外は操作できます。", "service_title" to "BaraPause が見守り中",
         "service_desc" to "選んだアプリのみ端末内で計測。", "summary_apps" to "制限アプリ", "summary_blocks" to "通知回数"
     );
+    private val popupEn=mapOf(
+        "popup_customize" to "Customize reminder", "popup_explain" to "Personalize the small break card. Changes appear on the next reminder.",
+        "popup_preview" to "Preview card", "popup_position" to "Position", "popup_top" to "Top",
+        "popup_middle" to "Center", "popup_bottom" to "Bottom", "popup_size" to "Card size",
+        "popup_compact" to "Compact", "popup_normal" to "Standard",
+        "popup_color" to "Color preset", "popup_sage" to "Sage", "popup_peach" to "Peach", "popup_lavender" to "Lavender",
+        "popup_animation" to "Entry animation", "popup_spring" to "Bounce", "popup_fade" to "Fade", "popup_none" to "None",
+        "popup_opacity" to "Opacity", "popup_mascot" to "Show capybara", "popup_messages" to "Custom messages",
+        "popup_title" to "Custom title", "popup_body" to "Custom message",
+        "popup_blank" to "Leave blank for translated default",
+        "popup_placeholder" to "Use {app} in your message to show the app name. Leave blank for language-aware defaults.",
+        "popup_reset" to "Restore default card", "popup_example_app" to "Example App", "popup_close" to "Close preview"
+    )
+    private val popupZh=mapOf(
+        "popup_customize" to "自定义提醒弹窗", "popup_explain" to "定制水豚提醒卡片；修改后下次提醒生效。",
+        "popup_preview" to "预览弹窗", "popup_position" to "显示位置", "popup_top" to "顶部",
+        "popup_middle" to "居中", "popup_bottom" to "底部", "popup_size" to "卡片尺寸",
+        "popup_compact" to "紧凑", "popup_normal" to "标准",
+        "popup_color" to "配色预设", "popup_sage" to "鼠尾草绿", "popup_peach" to "蜜桃色", "popup_lavender" to "淡紫色",
+        "popup_animation" to "进入动画", "popup_spring" to "弹起", "popup_fade" to "淡入", "popup_none" to "无动画",
+        "popup_opacity" to "透明度", "popup_mascot" to "显示水豚", "popup_messages" to "自定义文案",
+        "popup_title" to "自定义标题", "popup_body" to "自定义正文",
+        "popup_blank" to "留空使用多语言默认文案",
+        "popup_placeholder" to "正文可包含 {app}，显示当前 App 名称；留空则跟随语言。",
+        "popup_reset" to "恢复默认弹窗", "popup_example_app" to "示例应用", "popup_close" to "关闭预览"
+    )
+    private val popupTw=mapOf(
+        "popup_customize" to "自訂提醒視窗", "popup_explain" to "自訂水豚休息卡片；下次提醒生效。",
+        "popup_preview" to "預覽視窗", "popup_position" to "顯示位置", "popup_top" to "頂部",
+        "popup_middle" to "置中", "popup_bottom" to "底部", "popup_size" to "卡片大小",
+        "popup_compact" to "精簡", "popup_normal" to "標準",
+        "popup_color" to "配色", "popup_sage" to "鼠尾草綠", "popup_peach" to "蜜桃色", "popup_lavender" to "淡紫色",
+        "popup_animation" to "進場動畫", "popup_spring" to "彈出", "popup_fade" to "淡入", "popup_none" to "無動畫",
+        "popup_opacity" to "透明度", "popup_mascot" to "顯示水豚", "popup_messages" to "自訂文字",
+        "popup_title" to "自訂標題", "popup_body" to "自訂內容",
+        "popup_blank" to "留空使用各語言預設",
+        "popup_placeholder" to "內容可使用 {app} 顯示應用名稱；留空則跟隨語言。",
+        "popup_reset" to "還原預設", "popup_example_app" to "範例應用", "popup_close" to "關閉預覽"
+    )
+    private val popupJa=mapOf(
+        "popup_customize" to "休憩カードのカスタマイズ", "popup_explain" to "次の通知から設定が反映されます。",
+        "popup_preview" to "カードをプレビュー", "popup_position" to "表示位置", "popup_top" to "上",
+        "popup_middle" to "中央", "popup_bottom" to "下", "popup_size" to "カードサイズ",
+        "popup_compact" to "コンパクト", "popup_normal" to "標準",
+        "popup_color" to "配色", "popup_sage" to "セージ", "popup_peach" to "ピーチ", "popup_lavender" to "ラベンダー",
+        "popup_animation" to "アニメーション", "popup_spring" to "ポップ", "popup_fade" to "フェード", "popup_none" to "なし",
+        "popup_opacity" to "不透明度", "popup_mascot" to "カピバラを表示", "popup_messages" to "カスタムメッセージ",
+        "popup_title" to "タイトル", "popup_body" to "本文",
+        "popup_blank" to "空欄なら言語別の標準文",
+        "popup_placeholder" to "{app} で対象アプリ名を表示。空欄なら言語別の標準文。",
+        "popup_reset" to "初期設定に戻す", "popup_example_app" to "サンプルアプリ", "popup_close" to "プレビューを閉じる"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
-        return v ?: en[key] ?: key
+        val loc=language(context)
+        val p=when(loc) { "zh-Hans" -> popupZh[key]; "zh-Hant" -> popupTw[key]; "ja" -> popupJa[key]; else -> popupEn[key] }
+        return v ?: p ?: en[key] ?: popupEn[key] ?: key
     }
 }
