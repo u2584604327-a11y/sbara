@@ -30,10 +30,10 @@ class SettingsActivity : Activity() {
         root.addView(Ui.title(this,tr("settings")))
         root.addView(Ui.section(this,tr("break")))
         root.addView(Ui.button(this,tr("break")+": "+fmtDuration(prefs.effectiveBreakSeconds())) {
-            chooseDuration(tr("break"),prefs.breakSeconds, 60) { prefs.breakSeconds=it;recreate() }
+            chooseDuration(tr("break"),prefs.breakSeconds, 60) { if(prefs.testMode) prefs.testBreakSeconds=it else prefs.breakSeconds=it;recreate() }
         })
         root.addView(Ui.button(this,tr("extension")+": "+fmtDuration(prefs.effectiveExtensionSeconds())) {
-            chooseDuration(tr("extension"),prefs.extensionSeconds, 30) { prefs.extensionSeconds=it;recreate() }
+            chooseDuration(tr("extension"),prefs.extensionSeconds, 30) { if(prefs.testMode) prefs.testExtensionSeconds=it else prefs.extensionSeconds=it;recreate() }
         })
         root.addView(Ui.button(this,tr("extensions")+": ${prefs.maxExtensionsPerDay}") {
             val items=(0..5).map { it.toString() }.toTypedArray()
@@ -93,10 +93,10 @@ class SettingsActivity : Activity() {
     private fun chooseDuration(title:String,originalSeconds:Int,maxMinutes:Int,save:(Int)->Unit) {
         val choices=mutableListOf<Pair<String,Int>>()
         if(prefs.testMode) { choices.add("15 "+tr("seconds") to 15);choices.add("30 "+tr("seconds") to 30);choices.add("1 "+tr("minute") to 60) }
-        listOf(1,3,5,10,15,20,30,45,60).filter { it<=maxMinutes }
+        if(!prefs.testMode) listOf(1,3,5,10,15,20,30,45,60).filter { it<=maxMinutes }
             .forEach { choices.add("$it "+tr("minute") to it*60) }
         val texts=choices.map { it.first }.toMutableList()
-        texts.add(tr("custom"))
+        if(!prefs.testMode) texts.add(tr("custom"))
         AlertDialog.Builder(this).setTitle(title).setItems(texts.toTypedArray()) { _,index ->
             if(index==choices.size) {
                 val input=EditText(this).apply {
