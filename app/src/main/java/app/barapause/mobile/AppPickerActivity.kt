@@ -47,7 +47,7 @@ class AppPickerActivity : Activity() {
         val search = EditText(this).apply {
             hint = L10n.t(this@AppPickerActivity,"search")
             textSize = 16f
-            singleLine = true
+            setSingleLine(true)
             setTextColor(Appearance.palette(this@AppPickerActivity).text)
             setHintTextColor(Appearance.palette(this@AppPickerActivity).muted)
             background = Ui.cardBackground(this@AppPickerActivity)
