@@ -19,7 +19,10 @@ class MonitoringService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val ticker = object : Runnable {
         override fun run() {
-            try { tick() } catch (e: Exception) { Log.e("BaraPause", "Monitor tick error", e) }
+            try { tick() } catch (e: Exception) {
+                Log.e("BaraPause", "Monitor tick error", e)
+                if (::prefs.isInitialized) prefs.recordMonitorDiagnostic("error", e.javaClass.simpleName + ": " + (e.message ?: ""))
+            }
             handler.postDelayed(this, 1000L)
         }
     }
@@ -42,19 +45,36 @@ class MonitoringService : Service() {
             startForeground(1001, notification)
         }
         lastTickElapsed = SystemClock.elapsedRealtime()
+        prefs.recordMonitorDiagnostic("last_start", System.currentTimeMillis().toString())
         handler.post(ticker)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!prefs.monitoringEnabled) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        prefs.recordMonitorDiagnostic("task_removed", System.currentTimeMillis().toString())
+        super.onTaskRemoved(rootIntent)
     }
 
     private fun tick() {
         if (!prefs.monitoringEnabled || !PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
             overlay.hide()
+            prefs.recordMonitorDiagnostic("reason", "permission_or_switch_disabled")
             return
         }
+        prefs.recordMonitorDiagnostic("heartbeat", System.currentTimeMillis().toString())
         val pm = getSystemService(POWER_SERVICE) as PowerManager
         if (!pm.isInteractive) {
             overlay.hide()
             lastPkg = null
             lastTickElapsed = SystemClock.elapsedRealtime()
+            prefs.recordMonitorDiagnostic("reason", "screen_off")
             return
         }
 
@@ -62,11 +82,13 @@ class MonitoringService : Service() {
         val delta = (nowElapsed - lastTickElapsed).coerceIn(0L, 2_000L)
         lastTickElapsed = nowElapsed
         val currentPkg = detector.currentPackage()
+        prefs.recordMonitorDiagnostic("foreground", currentPkg ?: "(unknown)")
         val rule = currentPkg?.let { prefs.rules()[it] }
 
         if (rule == null || !rule.enabled || currentPkg == packageName) {
             overlay.hide()
             lastPkg = currentPkg
+            prefs.recordMonitorDiagnostic("reason", if(currentPkg == null) "foreground_unknown" else "not_limited")
             return
         }
 
@@ -75,6 +97,7 @@ class MonitoringService : Service() {
             prefs.addDailyUsage(currentPkg, delta)
         }
         lastPkg = currentPkg
+        prefs.recordMonitorDiagnostic("seconds", (prefs.sessionMs(currentPkg) / 1000L).toString())
 
         val nowWall = System.currentTimeMillis()
         val study = prefs.isStudyModeActive()
@@ -89,9 +112,11 @@ class MonitoringService : Service() {
             cooldownUntil = nowWall + prefs.effectiveBreakSeconds() * 1000L
             prefs.setCooldownUntil(currentPkg, cooldownUntil)
             prefs.incrementBlocks()
+            prefs.recordMonitorDiagnostic("last_trigger", currentPkg + "@" + nowWall)
         }
 
         if (cooldownUntil > nowWall) {
+            prefs.recordMonitorDiagnostic("reason", "break_active")
             val remaining = cooldownUntil - nowWall
             overlay.show(
                 packageName = currentPkg,
@@ -107,6 +132,7 @@ class MonitoringService : Service() {
                 }
             }
         } else {
+            prefs.recordMonitorDiagnostic("reason", "counting")
             overlay.hide()
         }
     }
@@ -136,6 +162,7 @@ class MonitoringService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(ticker)
+        if (::prefs.isInitialized) prefs.recordMonitorDiagnostic("last_destroy", System.currentTimeMillis().toString())
         overlay.hide()
         super.onDestroy()
     }
