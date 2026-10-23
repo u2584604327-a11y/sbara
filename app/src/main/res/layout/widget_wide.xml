@@ -1,40 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
+    android:id="@+id/widget_root" android:orientation="vertical"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:padding="12dp" android:orientation="vertical"
-    android:gravity="center_vertical"
+    android:gravity="center_vertical" android:padding="10dp"
     android:background="@drawable/widget_surface">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical">
-        <ImageView android:layout_width="36dp" android:layout_height="36dp"
+    <LinearLayout android:orientation="horizontal" android:gravity="center_vertical"
+        android:layout_width="match_parent" android:layout_height="34dp">
+        <ImageView android:layout_width="34dp" android:layout_height="34dp"
             android:src="@drawable/capybara_mascot" android:contentDescription="@string/app_name"/>
-        <TextView android:id="@+id/widget_title" android:layout_width="0dp"
+        <LinearLayout android:orientation="vertical" android:layout_width="0dp"
             android:layout_weight="1" android:layout_height="wrap_content"
-            android:text="BaraPause" android:textSize="17sp"
-            android:textStyle="bold" android:textColor="#382F27" android:paddingStart="6dp"/>
-        <TextView android:id="@+id/widget_target" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:maxLines="1"
-            android:text="App" android:textSize="11sp" android:textColor="#526E4C"/>
+            android:paddingStart="8dp">
+            <TextView android:id="@+id/widget_title" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="BaraPause" android:textSize="15sp"
+                android:textStyle="bold" android:textColor="#382F27" />
+            <TextView android:id="@+id/widget_target" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end"
+                android:text="先选择 App" android:textSize="11sp" android:textColor="#577453"/>
+        </LinearLayout>
+        <TextView android:id="@+id/widget_expand" android:layout_width="42dp"
+            android:layout_height="34dp" android:gravity="center" android:text="⌄"
+            android:textSize="24sp" android:textColor="#47684B"
+            android:contentDescription="展开或收起快捷操作"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp"
-        android:layout_weight="1" android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/widget_search" android:layout_width="0dp" android:layout_weight="1"
-            android:layout_height="42dp" android:gravity="center_vertical"
-            android:paddingStart="16dp" android:layout_marginEnd="7dp"
-            android:background="@drawable/widget_pill" android:textColor="#3B4E35"
-            android:textSize="14sp" android:text="🔎 Search"/>
-        <TextView android:id="@+id/widget_choose" android:layout_width="45dp"
-            android:layout_height="42dp" android:gravity="center"
-            android:background="@drawable/widget_pill" android:text="▦" android:textSize="21sp"
-            android:textColor="#3B4E35" android:layout_marginEnd="7dp"/>
-        <TextView android:id="@+id/widget_open" android:layout_width="45dp"
-            android:layout_height="42dp" android:gravity="center"
-            android:background="@drawable/widget_pill" android:text="▶" android:textSize="20sp"
-            android:textColor="#3B4E35"/>
+    <TextView android:id="@+id/widget_search" android:layout_width="match_parent"
+        android:layout_height="40dp" android:layout_marginTop="6dp"
+        android:background="@drawable/widget_pill"
+        android:gravity="center_vertical" android:paddingStart="14dp"
+        android:text="⌕  搜索内容 / App" android:textColor="#36583A"
+        android:textSize="14sp" android:textStyle="bold"/>
+    <LinearLayout android:id="@+id/widget_actions" android:visibility="gone"
+        android:orientation="horizontal" android:layout_width="match_parent"
+        android:layout_height="35dp" android:layout_marginTop="5dp"
+        android:gravity="center_vertical">
+        <TextView android:id="@+id/widget_choose" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="34dp" android:gravity="center"
+            android:background="@drawable/widget_action"
+            android:text="选软件" android:textColor="#476144" android:textSize="12sp"
+            android:layout_marginEnd="4dp"/>
+        <TextView android:id="@+id/widget_recent" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="34dp" android:gravity="center"
+            android:background="@drawable/widget_action"
+            android:text="最近搜索" android:textColor="#476144" android:textSize="12sp"
+            android:layout_marginEnd="4dp"/>
+        <TextView android:id="@+id/widget_open" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="34dp" android:gravity="center"
+            android:background="@drawable/widget_action"
+            android:text="打开已选" android:textColor="#476144" android:textSize="12sp"/>
     </LinearLayout>
     <TextView android:id="@+id/widget_search_label"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="Tap search to type keywords" android:textSize="11sp"
-        android:textColor="#766F63"/>
+        android:layout_marginTop="4dp" android:singleLine="true" android:ellipsize="end"
+        android:text="选择 App · 输入关键词" android:textSize="10sp"
+        android:textColor="#766E5E"/>
 </LinearLayout>
