@@ -542,6 +542,10 @@ object L10n {
     )
 
     private val v17En=mapOf(
+        "widget_hint_v17" to "Tap search to type a query",
+        "widget_last_v17" to "Recent",
+        "widget_search_v17" to "⌕  Search apps / content",
+        "widget_open_v17" to "Open saved",
         "qs_choose_required" to "First, choose an app below",
         "qs_keyword" to "What do you want to find?",
         "qs_chosen" to "Selected",
@@ -554,6 +558,10 @@ object L10n {
         "qs_try_search_ui" to "Try search screen"
     )
     private val v17Zh=mapOf(
+        "widget_hint_v17" to "选择软件后输入关键词",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  搜索内容 / App",
+        "widget_open_v17" to "打开已选",
         "qs_choose_required" to "请先在下方选择目标 App",
         "qs_keyword" to "输入你想搜索的内容",
         "qs_chosen" to "本次目标",
@@ -566,6 +574,10 @@ object L10n {
         "qs_try_search_ui" to "尝试搜索界面"
     )
     private val v17Tw=mapOf(
+        "widget_hint_v17" to "選擇 App 後輸入關鍵字",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  搜尋內容 / App",
+        "widget_open_v17" to "開啟已選",
         "qs_choose_required" to "請先選擇下方目標 App",
         "qs_keyword" to "輸入搜尋內容",
         "qs_chosen" to "本次目標",
@@ -578,6 +590,10 @@ object L10n {
         "qs_try_search_ui" to "嘗試搜尋頁"
     )
     private val v17Ja=mapOf(
+        "widget_hint_v17" to "アプリを選んで検索",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  アプリ・コンテンツを検索",
+        "widget_open_v17" to "前回のアプリ",
         "qs_choose_required" to "下から対象アプリを選択",
         "qs_keyword" to "検索キーワード",
         "qs_chosen" to "今回の対象",

@@ -58,7 +58,7 @@ object WidgetUpdater {
     fun render(context:Context, manager:AppWidgetManager, ids:IntArray, compact:Boolean) {
         val prefs=Prefs(context)
         val label=prefs.quickTargetLabel.takeIf { prefs.quickTargetPackage.isNotBlank() && it.isNotBlank() }
-        val target=label ?: "先选择 App"
+        val target=label ?: L10n.t(context,"qs_choose_required")
         val saved=context.getSharedPreferences("widget_panels",Context.MODE_PRIVATE)
         val last=prefs.recentSearches().firstOrNull()?.take(18)
         val flags=PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -81,8 +81,12 @@ object WidgetUpdater {
                 val expanded=saved.getBoolean("expand_$id",false)
                 views.setViewVisibility(R.id.widget_actions,if(expanded) View.VISIBLE else View.GONE)
                 views.setTextViewText(R.id.widget_expand,if(expanded) "⌃" else "⌄")
+                views.setTextViewText(R.id.widget_search,L10n.t(context,"widget_search_v17"))
+                views.setTextViewText(R.id.widget_choose,L10n.t(context,"choose_app"))
+                views.setTextViewText(R.id.widget_recent,L10n.t(context,"recent_searches"))
+                views.setTextViewText(R.id.widget_open,L10n.t(context,"widget_open_v17"))
                 views.setTextViewText(R.id.widget_search_label,
-                    if(last.isNullOrBlank()) "选择 App · 输入关键词" else "最近：$last")
+                    if(last.isNullOrBlank()) L10n.t(context,"widget_hint_v17") else L10n.t(context,"widget_last_v17")+": $last")
                 views.setOnClickPendingIntent(R.id.widget_search,activity(id,2,QuickLaunchActivity.ACTION_WIDGET_SEARCH))
                 views.setOnClickPendingIntent(R.id.widget_choose,activity(id,3,QuickLaunchActivity.ACTION_WIDGET_PICK))
                 // OPEN is an explicit action; only this control can use the remembered target.
