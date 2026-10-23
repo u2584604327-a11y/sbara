@@ -98,6 +98,76 @@ class ProfileStore(context:Context) {
         return true
     }
 
+    /** Export all slots without usage history, permissions, search records or active timers. */
+    @Synchronized fun exportBundle():JSONObject {
+        saveCurrent()
+        val root=read()
+        return JSONObject().apply {
+            put("schema","barapause-profiles/1")
+            put("active",root.optString("active"))
+            put("profiles",JSONArray(root.getJSONArray("profiles").toString()))
+        }
+    }
+
+    /**
+     * Validate the entire external file before any local mutation.
+     * Restore as new UUIDs and activate the saved entry. A failed restore preserves prior slots.
+     */
+    @Synchronized fun importBundle(input:JSONObject) {
+        require(input.optString("schema")=="barapause-profiles/1") { "Unsupported backup" }
+        val list=input.optJSONArray("profiles") ?: error("Missing slots")
+        require(list.length() in 1..LIMIT) { "Invalid slot count" }
+        val restored=JSONArray()
+        val ids=mutableMapOf<String,String>()
+        for(i in 0 until list.length()) {
+            val item=list.optJSONObject(i) ?: error("Malformed preset")
+            val name=item.optString("name").trim().take(24)
+            require(name.isNotEmpty()) { "Invalid name" }
+            val snapshot=item.optJSONObject("snapshot") ?: error("Missing settings")
+            require(snapshot.optString("schema")=="barapause-settings/1" &&
+                snapshot.optInt("version")==1) { "Invalid settings schema" }
+            val settingsObj=snapshot.optJSONObject("settings") ?: error("Invalid options")
+            val rulesObj=snapshot.optJSONArray("rules") ?: error("Invalid rules")
+            require(rulesObj.length()<=500 && settingsObj.length()<=48) { "Too many entries" }
+            // Input validation for rules; live apply repeats full settings validation.
+            val seen=mutableSetOf<String>()
+            for(j in 0 until rulesObj.length()) {
+                val r=rulesObj.optJSONObject(j) ?: error("Invalid rule")
+                val pkg=r.optString("package")
+                require(pkg.length in 3..180 &&
+                    pkg.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")) &&
+                    seen.add(pkg)) { "Invalid package" }
+                require(r.optInt("seconds",-1) in 60..14400)
+            }
+            val oldId=item.optString("id")
+            require(oldId.isNotBlank() && !ids.containsKey(oldId)) { "Duplicate ID" }
+            val newId=UUID.randomUUID().toString()
+            ids[oldId]=newId
+            restored.put(JSONObject().apply {
+                put("id",newId);put("name",name)
+                put("snapshot",JSONObject(snapshot.toString()))
+            })
+        }
+        val active=ids[input.optString("active")] ?: error("Missing active slot")
+        val next=JSONObject().apply {
+            put("active",active)
+            put("profiles",restored)
+        }
+        val old=read()
+        val oldSnapshot=settings.exportPortableSettings()
+        val selected=find(restored,active) ?: error("No active slot")
+        try {
+            // Full settings validation occurs before any writes in Prefs.importPortableSettings.
+            settings.applyProfileSnapshot(selected.getJSONObject("snapshot"))
+            persist(next)
+        } catch(e:Exception) {
+            // Best-effort restore of prior live settings; preserve old profile metadata.
+            runCatching { settings.applyProfileSnapshot(oldSnapshot) }
+            persist(old)
+            throw e
+        }
+    }
+
     @Synchronized fun delete(id:String) {
         val root=read()
         val arr=records(root)
