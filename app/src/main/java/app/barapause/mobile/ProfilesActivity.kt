@@ -14,6 +14,8 @@ class ProfilesActivity:Activity() {
     private lateinit var profiles:ProfileStore
     private lateinit var settings:Prefs
     private lateinit var page:ScrollView
+    private val exportCode=810
+    private val importCode=811
 
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,20 @@ class ProfilesActivity:Activity() {
                 runCatching{ profiles.create(name,true) }.onSuccess{render()}
                     .onFailure{toast(it.message ?: "Error")}
             }
+        })
+        root.addView(Ui.section(this,label("跨版本备份","Portable backup","跨版本備份","バックアップ")))
+        root.addView(Ui.button(this,label("导出所有存档 JSON","Export all presets as JSON","匯出全部存檔","すべてを書き出し")) {
+            startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type="application/json"
+                putExtra(Intent.EXTRA_TITLE,"BaraPause-profiles.json")
+            },exportCode)
+        })
+        root.addView(Ui.button(this,label("导入全部存档（覆盖当前存档）","Import presets (replaces all slots)","匯入全部存檔（覆蓋）","読み込み（全置換）")) {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type="application/json"
+            },importCode)
         })
         root.addView(Ui.section(this,label("所有存档","Saved presets","所有存檔","保存した設定")))
         profiles.profiles().forEach { preset ->
@@ -113,6 +129,56 @@ class ProfilesActivity:Activity() {
         }
         setContentView(page)
         page.post{page.scrollTo(0,old)}
+    }
+
+    override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?) {
+        super.onActivityResult(requestCode,resultCode,data)
+        if(resultCode!=RESULT_OK) return
+        val uri=data?.data ?: return
+        when(requestCode) {
+            exportCode -> runCatching {
+                val output=contentResolver.openOutputStream(uri,"w") ?: error("File unavailable")
+                output.use {it.write(profiles.exportBundle().toString(2).toByteArray(Charsets.UTF_8))}
+            }.onSuccess {toast(label("所有存档已备份","All presets exported"))}
+                .onFailure{toast(it.message ?: "Export failed")}
+            importCode -> {
+                val input=runCatching {
+                    val stream=contentResolver.openInputStream(uri) ?: error("Cannot open file")
+                    stream.use { source ->
+                        val buffer=ByteArray(8192)
+                        val out=java.io.ByteArrayOutputStream()
+                        while(true) {
+                            val n=source.read(buffer)
+                            if(n<0) break
+                            if(n==0) continue
+                            require(out.size()+n<=1_048_576) { "Backup exceeds 1 MiB" }
+                            out.write(buffer,0,n)
+                        }
+                        org.json.JSONObject(String(out.toByteArray(),Charsets.UTF_8))
+                    }
+                }.getOrElse {
+                    toast(it.message ?: "Invalid backup");return
+                }
+                AlertDialog.Builder(this)
+                    .setTitle(label("确认替换全部存档？","Replace every saved preset?"))
+                    .setMessage(label("此操作会替换所有本地配置档、重置当前倒计时。建议先导出备份。",
+                        "This replaces every local slot and resets active sessions. Export a backup first."))
+                    .setNegativeButton(label("取消","Cancel"),null)
+                    .setPositiveButton(label("确定导入","Import")){_,_->
+                        runCatching {
+                            profiles.importBundle(input)
+                            if(settings.monitoringEnabled && PermissionUtils.hasUsageAccess(this) &&
+                                PermissionUtils.hasOverlay(this)) {
+                                val intent=Intent(this,MonitoringService::class.java).apply {
+                                    action=MonitoringService.ACTION_PROFILE_CHANGED
+                                }
+                                if(Build.VERSION.SDK_INT>=26)startForegroundService(intent) else startService(intent)
+                            }
+                            WidgetUpdater.refresh(this)
+                        }.onSuccess{render()}.onFailure{toast(it.message ?: "Import failed")}
+                    }.show()
+            }
+        }
     }
 
     private fun nameDialog(title:String,initial:String,action:(String)->Unit) {
