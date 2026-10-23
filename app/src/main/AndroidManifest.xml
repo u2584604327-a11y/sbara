@@ -28,6 +28,8 @@
         android:label="BaraPause"
         android:theme="@style/AppTheme">
 
+        <activity android:name=".ShortcutEntryActivity" android:exported="true" />
+        <activity android:name=".WidgetSetupActivity" android:exported="false" />
         <activity android:name=".QuickLaunchActivity" android:exported="false" />
         <activity android:name=".PopupSettingsActivity" android:exported="false" />
         <activity android:name=".StatsActivity" android:exported="false" />
@@ -53,6 +55,7 @@
                 android:value="User-enabled local digital-wellbeing monitor that checks selected app foreground usage and presents a compact break reminder overlay when a user-configured limit is reached." />
         </service>
 
+        <receiver android:name=".WidgetPinReceiver" android:exported="false" />
         <receiver android:name=".WideWidgetProvider" android:exported="true">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_wide_info" />

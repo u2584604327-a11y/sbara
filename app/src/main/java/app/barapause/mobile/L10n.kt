@@ -337,6 +337,78 @@ object L10n {
         "stat_choose" to "制限アプリを選ぶ", "stat_apps" to "アプリ別使用時間", "stat_share_note" to "バーは計測時間の構成比であり、1日の上限ではありません。"
     )
 
+    private val fixEn=mapOf(
+        "widget_setup" to "Add / diagnose home widgets", "widget_explain" to "Widgets are added by the launcher, not through an Android permission dialog. You can pin or add them manually.",
+        "widget_status" to "Launcher compatibility", "widget_supported" to "Launcher accepts widget pin requests (confirmation is not guaranteed).",
+        "widget_not_supported" to "Launcher does not support direct widget pinning. Add manually on the home screen.",
+        "widget_added" to "Widgets currently added", "pin_wide" to "Request 4×2 search widget",
+        "pin_compact" to "Request 2×2 shortcut widget",
+        "widget_manual_heading" to "Manual installation", "widget_steps" to "Go to the desktop, long-press an empty area → Widgets / More widgets → BaraPause → drag the desired size. Some OriginOS versions place third-party widgets in More widgets.",
+        "go_home" to "Go to home screen", "widget_alternative" to "Alternative: pinned search shortcut",
+        "shortcut_explain" to "If native widgets are restricted, request an ordinary home screen shortcut to BaraPause search. The launcher may still require confirmation.",
+        "pin_shortcut" to "Request search shortcut", "widget_refresh" to "Refresh widget status",
+        "widget_request_sent" to "Pin request sent to the launcher. This does NOT mean the widget was added. Check your home screen, or use manual installation.",
+        "shortcut_request_sent" to "Shortcut pin request sent. Check launcher confirmation and home screen.",
+        "shortcut_not_supported" to "Launcher does not support pinning shortcuts automatically.",
+        "widget_error" to "Launcher request failed", "ok" to "OK",
+        "system_web_search" to "System / browser search", "recent_searches" to "Recent keywords",
+        "clear_search_history" to "Clear search history", "history_cleared" to "Local search history cleared",
+        "history_empty" to "No recent searches", "favorite" to "Favorite app",
+        "launch_failed" to "Could not launch the target app", "search_system_unavailable" to "No system browser search app is available."
+    )
+    private val fixZh=mapOf(
+        "widget_setup" to "添加 / 检查桌面组件", "widget_explain" to "桌面组件由系统桌面管理，不是申请运行时权限。可以尝试固定组件，也可以手动添加。",
+        "widget_status" to "桌面兼容性", "widget_supported" to "桌面接受固定组件请求，但不保证弹窗或添加成功。",
+        "widget_not_supported" to "当前桌面不支持应用主动固定组件，请从桌面手动添加。",
+        "widget_added" to "已添加组件数", "pin_wide" to "申请添加 4×2 搜索组件",
+        "pin_compact" to "申请添加 2×2 快捷组件",
+        "widget_manual_heading" to "手动添加步骤", "widget_steps" to "回到桌面，长按空白位置 → 小组件／更多组件 → BaraPause → 拖动对应尺寸。部分 OriginOS 将第三方组件放在「更多组件」。",
+        "go_home" to "返回桌面", "widget_alternative" to "备用方案：桌面搜索快捷方式",
+        "shortcut_explain" to "若原生组件被限制，可尝试把 BaraPause 搜索固定成普通桌面快捷方式。桌面仍可能要求确认。",
+        "pin_shortcut" to "申请添加搜索快捷方式", "widget_refresh" to "刷新组件检测",
+        "widget_request_sent" to "请求已送给系统桌面，但不代表成功添加。请检查桌面，或按说明手动添加。",
+        "shortcut_request_sent" to "快捷方式固定请求已发送，请查看桌面确认。",
+        "shortcut_not_supported" to "当前系统桌面不支持应用主动固定快捷方式。",
+        "widget_error" to "桌面请求发生错误", "ok" to "确定",
+        "system_web_search" to "调用系统网页搜索", "recent_searches" to "最近搜索",
+        "clear_search_history" to "清空搜索记录", "history_cleared" to "本地搜索历史已清空",
+        "history_empty" to "暂无历史记录", "favorite" to "收藏软件",
+        "launch_failed" to "无法启动目标软件", "search_system_unavailable" to "无法调用系统或浏览器搜索。"
+    )
+    private val fixTw=mapOf(
+        "widget_setup" to "新增／檢查桌面元件", "widget_explain" to "桌面元件由啟動器管理，並非執行階段權限。",
+        "widget_status" to "桌面相容性", "widget_supported" to "桌面接受固定請求，但不保證成功。",
+        "widget_not_supported" to "啟動器不支援直接固定，請手動新增。",
+        "widget_added" to "已加入元件", "pin_wide" to "固定 4×2 搜尋元件",
+        "pin_compact" to "固定 2×2 快捷元件", "widget_manual_heading" to "手動安裝",
+        "widget_steps" to "桌面長按空白處 → 元件／更多元件 → BaraPause → 拖動需要的大小。",
+        "go_home" to "回到桌面", "widget_alternative" to "替代：桌面搜尋捷徑",
+        "shortcut_explain" to "若元件受限，可嘗試新增搜尋捷徑。",
+        "pin_shortcut" to "請求新增捷徑", "widget_refresh" to "重新整理狀態",
+        "widget_request_sent" to "請求已傳送，不代表新增成功。請檢查桌面。",
+        "shortcut_request_sent" to "捷徑請求已送出。", "shortcut_not_supported" to "桌面不支援固定捷徑。",
+        "widget_error" to "桌面請求失敗", "ok" to "確定", "system_web_search" to "系統網頁搜尋",
+        "recent_searches" to "最近搜尋", "clear_search_history" to "清空紀錄",
+        "history_cleared" to "已清除", "history_empty" to "沒有歷史",
+        "favorite" to "收藏 App", "launch_failed" to "無法開啟 App", "search_system_unavailable" to "無法啟動系統搜尋。"
+    )
+    private val fixJa=mapOf(
+        "widget_setup" to "ウィジェットの追加・確認", "widget_explain" to "追加はホームアプリが管理します。権限ダイアログではありません。",
+        "widget_status" to "ホームアプリの対応", "widget_supported" to "固定リクエストに対応（追加成功とは限りません）。",
+        "widget_not_supported" to "直接追加に非対応。ホーム画面から手動追加してください。",
+        "widget_added" to "追加済み", "pin_wide" to "4×2 検索ウィジェット", "pin_compact" to "2×2 ウィジェット",
+        "widget_manual_heading" to "手動で追加", "widget_steps" to "ホーム画面の空白を長押し → ウィジェット／その他 → BaraPause → ドラッグ。",
+        "go_home" to "ホームへ戻る", "widget_alternative" to "代替：検索ショートカット",
+        "shortcut_explain" to "ウィジェットが制限される場合は検索ショートカットを追加できます。",
+        "pin_shortcut" to "ショートカットを追加", "widget_refresh" to "状態更新",
+        "widget_request_sent" to "追加リクエストを送信しました。追加成功ではありません。",
+        "shortcut_request_sent" to "ショートカット追加を要求しました。", "shortcut_not_supported" to "非対応です。",
+        "widget_error" to "追加エラー", "ok" to "OK", "system_web_search" to "システム検索",
+        "recent_searches" to "最近の検索", "clear_search_history" to "検索履歴の削除",
+        "history_cleared" to "削除しました", "history_empty" to "履歴なし",
+        "favorite" to "お気に入り", "launch_failed" to "アプリを起動できません", "search_system_unavailable" to "検索アプリが見つかりません。"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
@@ -346,6 +418,7 @@ object L10n {
         val widget=when(loc) { "zh-Hans" -> widgetZh[key]; "zh-Hant" -> widgetTw[key]; "ja" -> widgetJa[key]; else -> widgetEn[key] }
         val motion=when(loc) { "zh-Hans" -> motionZh[key]; "zh-Hant" -> motionTw[key]; "ja" -> motionJa[key]; else -> motionEn[key] }
         val stats=when(loc) { "zh-Hans" -> statsZh[key]; "zh-Hant" -> statsTw[key]; "ja" -> statsJa[key]; else -> statsEn[key] }
-        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: key
+        val fixed=when(loc) { "zh-Hans" -> fixZh[key]; "zh-Hant" -> fixTw[key]; "ja" -> fixJa[key]; else -> fixEn[key] }
+        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: fixed ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: fixEn[key] ?: key
     }
 }

@@ -154,15 +154,8 @@ class MainActivity : Activity() {
                 }
             }
         })
-        root.addView(Ui.button(this, "▦ " + L10n.t(this,"add_widget")) {
-            val widgetManager=android.appwidget.AppWidgetManager.getInstance(this)
-            val provider=android.content.ComponentName(this,WideWidgetProvider::class.java)
-            if(android.os.Build.VERSION.SDK_INT>=26 && widgetManager.isRequestPinAppWidgetSupported) {
-                val ok=widgetManager.requestPinAppWidget(provider,null,null)
-                if(!ok) android.widget.Toast.makeText(this,L10n.t(this,"widget_manual"),android.widget.Toast.LENGTH_LONG).show()
-            } else {
-                android.widget.Toast.makeText(this,L10n.t(this,"widget_manual"),android.widget.Toast.LENGTH_LONG).show()
-            }
+        root.addView(Ui.button(this, "▦ " + L10n.t(this,"widget_setup")) {
+            startActivity(Intent(this, WidgetSetupActivity::class.java))
         })
         root.addView(Ui.button(this, L10n.t(this,"quick_search")) {
             startActivity(Intent(this, QuickLaunchActivity::class.java))
