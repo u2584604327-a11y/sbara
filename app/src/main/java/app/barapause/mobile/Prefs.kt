@@ -2,6 +2,7 @@ package app.barapause.mobile
 
 import android.content.Context
 import org.json.JSONObject
+import org.json.JSONArray
 import java.time.LocalDate
 import java.util.Calendar
 
@@ -148,6 +149,29 @@ class Prefs(context: Context) {
     var quickTargetLabel: String
         get() = p.getString("quick_target_label", "") ?: ""
         set(v) = p.edit().putString("quick_target_label", v.take(80)).apply()
+
+    fun quickFavorites(): Set<String> =
+        p.getStringSet("quick_favorites", emptySet())?.toSet() ?: emptySet()
+    fun toggleQuickFavorite(pkg: String) {
+        val set=quickFavorites().toMutableSet()
+        if(!set.add(pkg)) set.remove(pkg)
+        p.edit().putStringSet("quick_favorites",set).apply()
+    }
+    fun recentSearches(): List<String> {
+        val arr=runCatching { JSONArray(p.getString("quick_search_history", "[]")) }.getOrElse { JSONArray() }
+        return (0 until arr.length()).mapNotNull { index -> arr.optString(index).takeIf { it.isNotBlank() } }
+    }
+    fun recordSearch(value: String) {
+        val trimmed=value.trim().take(100)
+        if(trimmed.isBlank()) return
+        val list=(listOf(trimmed)+recentSearches().filterNot { it.equals(trimmed, true) }).take(12)
+        val arr=JSONArray()
+        list.forEach { arr.put(it) }
+        p.edit().putString("quick_search_history",arr.toString()).apply()
+    }
+    fun clearSearchHistory() {
+        p.edit().remove("quick_search_history").apply()
+    }
 
     fun rules(): Map<String, AppRule> {
         val raw = p.getString("rules", "{}") ?: "{}"

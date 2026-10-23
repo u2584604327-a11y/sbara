@@ -80,7 +80,7 @@ class WidgetSetupActivity : Activity() {
             }
             val requestCode=if(providerClass==WideWidgetProvider::class.java) 211 else 212
             val callback=PendingIntent.getBroadcast(this,requestCode,receiver,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
             val accepted=widgetManager.requestPinAppWidget(provider,null,callback)
             if(accepted) {
                 showMessage(phrase("widget_request_sent") + "\n\n" + phrase("widget_steps"))

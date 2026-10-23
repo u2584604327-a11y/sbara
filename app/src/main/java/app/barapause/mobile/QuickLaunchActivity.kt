@@ -33,6 +33,7 @@ class QuickLaunchActivity : Activity() {
     private data class App(val pkg:String,val name:String)
     private val worker=Executors.newSingleThreadExecutor()
     private var apps=listOf<App>()
+    private lateinit var prefs:Prefs
     private var chosen:App?=null
     private lateinit var list:LinearLayout
     private lateinit var search:EditText
@@ -43,9 +44,9 @@ class QuickLaunchActivity : Activity() {
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         Appearance.applyWindow(this)
-        val preferences=Prefs(this)
-        val saved=preferences.quickTargetPackage
-        if(saved.isNotBlank()) chosen=App(saved,preferences.quickTargetLabel.ifBlank { saved })
+        prefs=Prefs(this)
+        val saved=prefs.quickTargetPackage
+        if(saved.isNotBlank()) chosen=App(saved,prefs.quickTargetLabel.ifBlank { saved })
         if(intent?.action==ACTION_WIDGET_OPEN && chosen!=null) {
             val launch=packageManager.getLaunchIntentForPackage(chosen!!.pkg)
             if(launch!=null && runCatching { startActivity(launch) }.isSuccess) { finish();return }
@@ -76,10 +77,16 @@ class QuickLaunchActivity : Activity() {
             setTextColor(Appearance.palette(this@QuickLaunchActivity).text)
         }
         root.addView(keyword)
+        root.addView(Ui.button(this,L10n.t(this,"recent_searches")) { selectRecentSearch() })
+        root.addView(Ui.button(this,L10n.t(this,"system_web_search")) { webSearch() })
         root.addView(Ui.button(this,L10n.t(this,"launch_app")) { launchSelected() })
         root.addView(Ui.button(this,L10n.t(this,"search_in_app")) { searchSelected() })
         root.addView(Ui.button(this,L10n.t(this,"copy_and_open")) { copyAndOpen() })
         root.addView(Ui.text(this,L10n.t(this,"quick_search_explain"),12f))
+        root.addView(Ui.button(this,L10n.t(this,"clear_search_history")) {
+            prefs.clearSearchHistory()
+            Toast.makeText(this,L10n.t(this,"history_cleared"),Toast.LENGTH_SHORT).show()
+        })
         list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
         val scrolling=ScrollView(this)
         scrolling.addView(list)
@@ -117,8 +124,10 @@ class QuickLaunchActivity : Activity() {
         if(!::list.isInitialized) return
         list.removeAllViews()
         val q=search.text.toString().lowercase().trim()
+        val favorites=prefs.quickFavorites()
         apps.filter { q.isBlank() || (it.name+" "+it.pkg).lowercase().contains(q) }
-            .take(80).forEach { app ->
+            .sortedWith(compareByDescending<App> { favorites.contains(it.pkg) }.thenBy { it.name.lowercase() })
+            .take(100).forEach { app ->
                 val row=LinearLayout(this).apply {
                     orientation=LinearLayout.HORIZONTAL
                     gravity=Gravity.CENTER_VERTICAL
@@ -136,6 +145,18 @@ class QuickLaunchActivity : Activity() {
                     setPadding(Ui.dp(this@QuickLaunchActivity,10),0,0,0)
                     maxLines=1
                 })
+                val star=TextView(this).apply {
+                    text=if(favorites.contains(app.pkg)) "★" else "☆"
+                    textSize=23f
+                    setTextColor(Appearance.palette(this@QuickLaunchActivity).accent)
+                    setPadding(Ui.dp(this@QuickLaunchActivity,12),Ui.dp(this@QuickLaunchActivity,6),Ui.dp(this@QuickLaunchActivity,12),Ui.dp(this@QuickLaunchActivity,6))
+                    contentDescription=L10n.t(this@QuickLaunchActivity,"favorite")
+                    setOnClickListener {
+                        prefs.toggleQuickFavorite(app.pkg)
+                        render()
+                    }
+                }
+                row.addView(star)
                 row.setOnClickListener {
                     chosen=app
                     Prefs(this).apply {
@@ -152,41 +173,52 @@ class QuickLaunchActivity : Activity() {
 
     private fun launchSelected() {
         val target=chosen ?: return Toast.makeText(this,L10n.t(this,"choose_app"),Toast.LENGTH_SHORT).show()
-        val intent=packageManager.getLaunchIntentForPackage(target.pkg)
-        if(intent==null) Toast.makeText(this,L10n.t(this,"choose_app"),Toast.LENGTH_SHORT).show()
-        else runCatching { startActivity(intent) }.onFailure { Toast.makeText(this,it.javaClass.simpleName,Toast.LENGTH_LONG).show() }
+        if(!SystemSearch.launch(this,target.pkg)) {
+            Toast.makeText(this,L10n.t(this,"launch_failed"),Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun searchSelected() {
         val target=chosen ?: return Toast.makeText(this,L10n.t(this,"choose_app"),Toast.LENGTH_SHORT).show()
         val query=keyword.text.toString().trim()
         if(query.isBlank()) return Toast.makeText(this,L10n.t(this,"query_required"),Toast.LENGTH_SHORT).show()
-        val attempts=listOf(
-            Intent(Intent.ACTION_SEARCH).apply {
-                setPackage(target.pkg)
-                putExtra(SearchManager.QUERY,query)
-            },
-            Intent("com.google.android.gms.actions.SEARCH_ACTION").apply {
-                setPackage(target.pkg)
-                putExtra("query",query)
-            }
-        )
-        for(intent in attempts) {
-            if(intent.resolveActivity(packageManager)!=null) {
-                if(runCatching { startActivity(intent) }.isSuccess) return
-            }
-        }
-        copyAndOpen()
-        Toast.makeText(this,L10n.t(this,"search_fallback"),Toast.LENGTH_LONG).show()
+        prefs.recordSearch(query)
+        if(SystemSearch.searchInTarget(this,target.pkg,query)) return
+        val copied=SystemSearch.copyAndLaunch(this,target.pkg,query)
+        Toast.makeText(this, L10n.t(this,if(copied) "search_fallback" else "launch_failed"), Toast.LENGTH_LONG).show()
     }
 
     private fun copyAndOpen() {
+        val target=chosen ?: return Toast.makeText(this,L10n.t(this,"choose_app"),Toast.LENGTH_SHORT).show()
         val query=keyword.text.toString().trim()
-        if(query.isNotEmpty()) {
-            val clipboard=getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("BaraPause query",query))
+        if(query.isNotBlank()) prefs.recordSearch(query)
+        if(!SystemSearch.copyAndLaunch(this,target.pkg,query)) {
+            Toast.makeText(this,L10n.t(this,"launch_failed"),Toast.LENGTH_LONG).show()
         }
-        launchSelected()
+    }
+
+    private fun webSearch() {
+        val query=keyword.text.toString().trim()
+        if(query.isEmpty()) {
+            Toast.makeText(this,L10n.t(this,"query_required"),Toast.LENGTH_SHORT).show()
+            return
+        }
+        prefs.recordSearch(query)
+        if(!SystemSearch.systemWebSearch(this,query)) {
+            Toast.makeText(this,L10n.t(this,"search_system_unavailable"),Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun selectRecentSearch() {
+        val history=prefs.recentSearches()
+        if(history.isEmpty()) return Toast.makeText(this,L10n.t(this,"history_empty"),Toast.LENGTH_SHORT).show()
+        AlertDialog.Builder(this)
+            .setTitle(L10n.t(this,"recent_searches"))
+            .setItems(history.toTypedArray()) { _,which ->
+                keyword.setText(history[which])
+                keyword.setSelection(keyword.text.length)
+            }
+            .setNegativeButton(L10n.t(this,"cancel"),null).show()
     }
 
     override fun onPause() {
