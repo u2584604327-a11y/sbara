@@ -160,8 +160,11 @@ class MainActivity : Activity() {
         root.addView(Ui.button(this, L10n.t(this,"quick_search")) {
             startActivity(Intent(this, QuickLaunchActivity::class.java))
         })
+        root.addView(Ui.button(this, "⏳ " + L10n.t(this,"focus_title")) { startActivity(Intent(this,FocusActivity::class.java)) })
+        root.addView(Ui.button(this, "↗ " + L10n.t(this,"links_title")) { startActivity(Intent(this,ContentLinkActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"selected_apps")) { startActivity(Intent(this, AppPickerActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"settings")) { startActivity(Intent(this, SettingsActivity::class.java)) })
+        root.addView(Ui.button(this, L10n.t(this,"backup_title")) { startActivity(Intent(this,BackupActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"stats")) { startActivity(Intent(this, StatsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"popup_customize")) { startActivity(Intent(this, PopupSettingsActivity::class.java)) })
         root.addView(Ui.button(this, L10n.t(this,"battery")) { startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) })
