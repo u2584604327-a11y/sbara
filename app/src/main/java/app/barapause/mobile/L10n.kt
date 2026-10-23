@@ -541,6 +541,70 @@ object L10n {
         "links_unavailable" to "対応アプリがありません"
     )
 
+    private val v17En=mapOf(
+        "widget_hint_v17" to "Tap search to type a query",
+        "widget_last_v17" to "Recent",
+        "widget_search_v17" to "⌕  Search apps / content",
+        "widget_open_v17" to "Open saved",
+        "qs_choose_required" to "First, choose an app below",
+        "qs_keyword" to "What do you want to find?",
+        "qs_chosen" to "Selected",
+        "qs_open_search_ui" to "Try to open app's search box",
+        "qs_explain" to "Direct search needs a public app search interface. Otherwise try opening the app's search screen or copy your query; BaraPause cannot tap a private search field.",
+        "qs_favorites" to "Apps (favorites first)",
+        "qs_no_search_ui" to "No public search entry found",
+        "qs_no_search_explain" to "This app hasn't exposed a compatible search entry. You can still open its homepage or search the web.",
+        "qs_fallback_explain" to "Search couldn't be delivered directly. Try the app's public search screen, or copy the text and open the app.",
+        "qs_try_search_ui" to "Try search screen"
+    )
+    private val v17Zh=mapOf(
+        "widget_hint_v17" to "选择软件后输入关键词",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  搜索内容 / App",
+        "widget_open_v17" to "打开已选",
+        "qs_choose_required" to "请先在下方选择目标 App",
+        "qs_keyword" to "输入你想搜索的内容",
+        "qs_chosen" to "本次目标",
+        "qs_open_search_ui" to "尝试进入 App 搜索框",
+        "qs_explain" to "只有目标 App 开放搜索接口才能直达结果；否则可尝试打开其搜索界面，或复制关键词并打开。无法强制操作第三方的私有搜索框。",
+        "qs_favorites" to "选择软件（收藏优先）",
+        "qs_no_search_ui" to "目标 App 没有可调用的公开搜索入口",
+        "qs_no_search_explain" to "无法保证进入该软件的内部搜索框。可以尝试打开 App 首页或调用系统网页搜索。",
+        "qs_fallback_explain" to "无法直接完成该软件的搜索。你可尝试其公开搜索界面，或复制关键词后打开软件。",
+        "qs_try_search_ui" to "尝试搜索界面"
+    )
+    private val v17Tw=mapOf(
+        "widget_hint_v17" to "選擇 App 後輸入關鍵字",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  搜尋內容 / App",
+        "widget_open_v17" to "開啟已選",
+        "qs_choose_required" to "請先選擇下方目標 App",
+        "qs_keyword" to "輸入搜尋內容",
+        "qs_chosen" to "本次目標",
+        "qs_open_search_ui" to "嘗試開啟 App 搜尋框",
+        "qs_explain" to "只有 App 開放搜尋介面才可直達；否則可嘗試搜尋頁或複製後開啟。無法控制第三方私人搜尋框。",
+        "qs_favorites" to "選擇 App（收藏優先）",
+        "qs_no_search_ui" to "沒有公開搜尋入口",
+        "qs_no_search_explain" to "無法保證進入此 App 的搜尋欄，可開啟首頁或網頁搜尋。",
+        "qs_fallback_explain" to "無法直接搜尋。請嘗試公開搜尋頁或複製關鍵字後開啟。",
+        "qs_try_search_ui" to "嘗試搜尋頁"
+    )
+    private val v17Ja=mapOf(
+        "widget_hint_v17" to "アプリを選んで検索",
+        "widget_last_v17" to "最近",
+        "widget_search_v17" to "⌕  アプリ・コンテンツを検索",
+        "widget_open_v17" to "前回のアプリ",
+        "qs_choose_required" to "下から対象アプリを選択",
+        "qs_keyword" to "検索キーワード",
+        "qs_chosen" to "今回の対象",
+        "qs_open_search_ui" to "アプリの検索画面を開く",
+        "qs_explain" to "アプリが公開検索インターフェースを提供する場合のみ直接検索できます。非公開の検索欄は操作できません。",
+        "qs_favorites" to "アプリ（お気に入り優先）",
+        "qs_no_search_ui" to "公開検索インターフェースなし",
+        "qs_no_search_explain" to "アプリの内部検索欄への移動は保証できません。ホーム画面またはWeb検索を試してください。",
+        "qs_fallback_explain" to "直接検索できません。検索画面を試すか、キーワードをコピーしてアプリを開いてください。",
+        "qs_try_search_ui" to "検索画面を試す"
+    )
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
@@ -552,6 +616,7 @@ object L10n {
         val stats=when(loc) { "zh-Hans" -> statsZh[key]; "zh-Hant" -> statsTw[key]; "ja" -> statsJa[key]; else -> statsEn[key] }
         val fixed=when(loc) { "zh-Hans" -> fixZh[key]; "zh-Hant" -> fixTw[key]; "ja" -> fixJa[key]; else -> fixEn[key] }
         val extra=when(loc) { "zh-Hans" -> v16Zh[key]; "zh-Hant" -> v16Tw[key]; "ja" -> v16Ja[key]; else -> v16En[key] }
-        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: fixed ?: extra ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: fixEn[key] ?: v16En[key] ?: key
+        val ui17=when(loc) { "zh-Hans" -> v17Zh[key]; "zh-Hant" -> v17Tw[key]; "ja" -> v17Ja[key]; else -> v17En[key] }
+        return ui17 ?: v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: fixed ?: extra ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: fixEn[key] ?: v16En[key] ?: key
     }
 }
