@@ -372,6 +372,45 @@ class Prefs(context: Context) {
      * Validates every import field first, then applies a merge of the portable settings.
      * Missing keys do not override preferences. Existing rules not in backup are retained.
      */
+    /**
+     * Apply a full profile, not a merging backup. Validate using the existing import
+     * path, then replace the rule set and clear session/cooldown counters so one profile
+     * cannot inherit another profile's remaining time. Usage history remains global.
+     */
+    fun applyProfileSnapshot(snapshot: JSONObject): Int {
+        require(snapshot.optString("schema")=="barapause-settings/1")
+        val entries=snapshot.optJSONArray("rules") ?: error("Missing rules")
+        val replacement=linkedMapOf<String,AppRule>()
+        require(entries.length()<=500) { "Too many rules" }
+        for(i in 0 until entries.length()) {
+            val r=entries.optJSONObject(i) ?: error("Invalid rule")
+            val pkg=r.optString("package")
+            require(pkg.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+"))) { "Invalid package" }
+            require(!replacement.containsKey(pkg)) { "Duplicate package" }
+            val sec=r.optInt("seconds",-1)
+            require(sec in 60..14400)
+            replacement[pkg]=AppRule(pkg,r.optString("label",pkg).take(80),
+                (sec/60).coerceAtLeast(1),r.optBoolean("enabled",true),sec)
+        }
+        // The import implementation validates all settings before its first write.
+        importPortableSettings(snapshot)
+        val editor=p.edit()
+        val root=JSONObject()
+        for((_,r) in replacement) root.put(r.packageName,JSONObject().apply {
+            put("label",r.label);put("limit",r.limitMinutes)
+            put("enabled",r.enabled);put("seconds",r.limitSeconds)
+        })
+        editor.putString("rules",root.toString())
+        for(key in p.all.keys) {
+            if(key.startsWith("session_") || key.startsWith("bonus_") ||
+                key.startsWith("cooldown_") || key.startsWith("test_session_") ||
+                key.startsWith("test_bonus_") || key.startsWith("test_cooldown_"))
+                editor.remove(key)
+        }
+        editor.apply()
+        return replacement.size
+    }
+
     fun importPortableSettings(root:JSONObject):Int {
         require(root.optString("schema")=="barapause-settings/1" && root.optInt("version")==1) {
             "Unsupported backup format"
