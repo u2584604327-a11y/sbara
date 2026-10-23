@@ -105,8 +105,8 @@ class WidgetSetupActivity : Activity() {
             return
         }
         val target=pref.quickTargetLabel.ifBlank { phrase("quick_search") }
-        val launch=Intent(this,QuickLaunchActivity::class.java).apply {
-            action=QuickLaunchActivity.ACTION_WIDGET_SEARCH
+        val launch=Intent(this,ShortcutEntryActivity::class.java).apply {
+            action=Intent.ACTION_VIEW
             flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val shortcut=ShortcutInfo.Builder(this,"barapause_search")
