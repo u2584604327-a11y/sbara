@@ -409,6 +409,138 @@ object L10n {
         "favorite" to "お気に入り", "launch_failed" to "アプリを起動できません", "search_system_unavailable" to "検索アプリが見つかりません。"
     )
 
+    private val v16En=mapOf(
+        "focus_title" to "Temporary focus",
+        "focus_explain" to "Selected app limits are halved and extensions disabled during focus. Restores automatically.",
+        "focus_start" to "Start focus",
+        "focus_custom" to "Custom duration",
+        "focus_stop" to "End focus",
+        "focus_stop_confirm" to "End this focus session?",
+        "focus_confirm" to "Limits will be halved; no extensions.",
+        "focus_inactive" to "No active focus",
+        "focus_priority" to "How it works",
+        "focus_priority_explain" to "Requires monitoring enabled; does not lock your phone. Temporary focus takes priority over the scheduled study window.",
+        "backup_title" to "Settings backup / restore",
+        "backup_explain" to "Export or import rules and appearance using the Android file picker.",
+        "backup_export" to "Export settings JSON",
+        "backup_import" to "Import settings JSON",
+        "backup_privacy" to "Excludes usage data, diagnostics, photo URI, search history, permissions and focus session. Import merges existing rules.",
+        "backup_saved" to "Backup saved",
+        "backup_invalid" to "Invalid backup",
+        "backup_confirm" to "Import these settings?",
+        "backup_rule_count" to "app rules",
+        "backup_merge" to "Unlisted existing rules are retained.",
+        "backup_imported" to "Rules imported",
+        "links_title" to "Open content link",
+        "links_desc" to "Paste an HTTPS link to a video, article, product or post. Android decides which app can handle it.",
+        "links_open" to "Open link",
+        "links_clear" to "Clear saved link",
+        "links_warning" to "HTTPS only. No intent:// or private commands. Some content opens in a browser.",
+        "links_invalid" to "Enter a valid HTTPS URL without credentials.",
+        "links_confirm" to "Open external link?",
+        "links_confirm_desc" to "Android routes this URL to a compatible app or browser.",
+        "links_unavailable" to "No compatible app found"
+    )
+
+    private val v16Zh=mapOf(
+        "focus_title" to "临时专注",
+        "focus_explain" to "专注期间所选 App 限额减半、无法延期；结束后自动恢复。",
+        "focus_start" to "开始专注",
+        "focus_custom" to "自定义时长",
+        "focus_stop" to "提前结束专注",
+        "focus_stop_confirm" to "确定结束本轮专注？",
+        "focus_confirm" to "受限 App 限额减半，禁止延期。",
+        "focus_inactive" to "当前没有专注时段",
+        "focus_priority" to "生效范围",
+        "focus_priority_explain" to "需开启监控，不锁定手机；临时专注优先于固定学习时段。",
+        "backup_title" to "备份与恢复设置",
+        "backup_explain" to "用 Android 文件选择器导出或导入受限 App 规则及外观设置。",
+        "backup_export" to "导出 JSON 规则",
+        "backup_import" to "导入 JSON 规则",
+        "backup_privacy" to "不导出使用历史、诊断、照片路径、搜索记录、权限及正在运行的专注时段；导入时合并原有规则。",
+        "backup_saved" to "备份已保存",
+        "backup_invalid" to "备份文件无效",
+        "backup_confirm" to "确定导入并合并？",
+        "backup_rule_count" to "条 App 规则",
+        "backup_merge" to "未列出的原规则继续保留。",
+        "backup_imported" to "已导入规则",
+        "links_title" to "内容页面直达",
+        "links_desc" to "粘贴视频、笔记、文章或商品 HTTPS 链接，让 Android 交给可处理的应用或浏览器。",
+        "links_open" to "调用系统打开",
+        "links_clear" to "清除链接",
+        "links_warning" to "仅接受 HTTPS，不执行 intent:// 或私有命令；不保证一定打开 App。",
+        "links_invalid" to "请输入不含账号密码的 HTTPS 网址。",
+        "links_confirm" to "确认打开外部链接？",
+        "links_confirm_desc" to "系统决定用对应 App 还是浏览器。",
+        "links_unavailable" to "没有能够打开此链接的应用"
+    )
+
+    private val v16Tw=mapOf(
+        "focus_title" to "臨時專注",
+        "focus_explain" to "專注期間 App 上限減半、不能延期；結束後自動恢復。",
+        "focus_start" to "開始專注",
+        "focus_custom" to "自訂時間",
+        "focus_stop" to "結束專注",
+        "focus_stop_confirm" to "確定結束專注？",
+        "focus_confirm" to "上限減半且不能延期。",
+        "focus_inactive" to "目前沒有專注時段",
+        "focus_priority" to "生效範圍",
+        "focus_priority_explain" to "必須啟用監控；不鎖定手機。",
+        "backup_title" to "備份與還原設定",
+        "backup_explain" to "使用 Android 檔案選擇器匯出或匯入規則。",
+        "backup_export" to "匯出 JSON",
+        "backup_import" to "匯入 JSON",
+        "backup_privacy" to "不包含使用紀錄、圖片連結及權限；原有未列出規則保留。",
+        "backup_saved" to "已儲存",
+        "backup_invalid" to "無效備份",
+        "backup_confirm" to "確定匯入？",
+        "backup_rule_count" to "條規則",
+        "backup_merge" to "未列出規則保留。",
+        "backup_imported" to "已匯入",
+        "links_title" to "開啟指定內容",
+        "links_desc" to "貼上 HTTPS 內容網址，交由系統選擇 App 或瀏覽器。",
+        "links_open" to "使用系統開啟",
+        "links_clear" to "清除網址",
+        "links_warning" to "僅限 HTTPS，不執行 intent://。",
+        "links_invalid" to "請輸入合法 HTTPS 網址。",
+        "links_confirm" to "開啟外部網址？",
+        "links_confirm_desc" to "Android 決定開啟方式。",
+        "links_unavailable" to "無法開啟"
+    )
+
+    private val v16Ja=mapOf(
+        "focus_title" to "一時的な集中モード",
+        "focus_explain" to "制限を半分にして延長を禁止。終了後に自動で戻ります。",
+        "focus_start" to "集中を開始",
+        "focus_custom" to "時間を指定",
+        "focus_stop" to "集中を終了",
+        "focus_stop_confirm" to "集中を終了しますか？",
+        "focus_confirm" to "使用制限が半分になり、延長できません。",
+        "focus_inactive" to "集中モードは停止中",
+        "focus_priority" to "動作",
+        "focus_priority_explain" to "監視の有効化が必要です。画面はロックしません。",
+        "backup_title" to "設定のバックアップ",
+        "backup_explain" to "Android ファイル選択から設定を JSON として保存・読み込みします。",
+        "backup_export" to "JSON 書き出し",
+        "backup_import" to "JSON 読み込み",
+        "backup_privacy" to "履歴や権限は含みません。既存ルールと統合します。",
+        "backup_saved" to "保存しました",
+        "backup_invalid" to "無効なバックアップ",
+        "backup_confirm" to "設定を読み込みますか？",
+        "backup_rule_count" to "件のルール",
+        "backup_merge" to "未記載ルールを保持します。",
+        "backup_imported" to "読み込み完了",
+        "links_title" to "コンテンツリンクを開く",
+        "links_desc" to "HTTPS の動画や記事、商品リンクを開きます。",
+        "links_open" to "システムで開く",
+        "links_clear" to "URL を消去",
+        "links_warning" to "HTTPS のみ。intent:// は実行しません。",
+        "links_invalid" to "有効な HTTPS URL を入力してください。",
+        "links_confirm" to "外部リンクを開きますか？",
+        "links_confirm_desc" to "Android が対応アプリやブラウザーに渡します。",
+        "links_unavailable" to "対応アプリがありません"
+    )
+
     fun t(context: Context, key: String): String {
         val v = when (language(context)) { "zh-Hans" -> zh[key]; "zh-Hant" -> tw[key]; "ja" -> ja[key]; else -> en[key] }
         val loc=language(context)
@@ -419,6 +551,7 @@ object L10n {
         val motion=when(loc) { "zh-Hans" -> motionZh[key]; "zh-Hant" -> motionTw[key]; "ja" -> motionJa[key]; else -> motionEn[key] }
         val stats=when(loc) { "zh-Hans" -> statsZh[key]; "zh-Hant" -> statsTw[key]; "ja" -> statsJa[key]; else -> statsEn[key] }
         val fixed=when(loc) { "zh-Hans" -> fixZh[key]; "zh-Hant" -> fixTw[key]; "ja" -> fixJa[key]; else -> fixEn[key] }
-        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: fixed ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: fixEn[key] ?: key
+        val extra=when(loc) { "zh-Hans" -> v16Zh[key]; "zh-Hant" -> v16Tw[key]; "ja" -> v16Ja[key]; else -> v16En[key] }
+        return v ?: p ?: monitor ?: n ?: widget ?: motion ?: stats ?: fixed ?: extra ?: en[key] ?: popupEn[key] ?: monitorEn[key] ?: newEn[key] ?: widgetEn[key] ?: motionEn[key] ?: statsEn[key] ?: fixEn[key] ?: v16En[key] ?: key
     }
 }
