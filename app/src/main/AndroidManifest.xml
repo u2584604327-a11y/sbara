@@ -22,13 +22,16 @@
     </queries>
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="BaraPause"
         android:theme="@style/AppTheme">
 
         <activity android:name=".ShortcutEntryActivity" android:exported="true" />
+        <activity android:name=".FocusActivity" android:exported="false" />
+        <activity android:name=".BackupActivity" android:exported="false" />
+        <activity android:name=".ContentLinkActivity" android:exported="false" />
         <activity android:name=".WidgetSetupActivity" android:exported="false" />
         <activity android:name=".QuickLaunchActivity" android:exported="false" />
         <activity android:name=".PopupSettingsActivity" android:exported="false" />

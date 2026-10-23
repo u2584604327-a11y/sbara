@@ -77,6 +77,8 @@ class SettingsActivity : Activity() {
             startActivity(Intent(this,PopupSettingsActivity::class.java))
         })
         root.addView(Ui.section(this,tr("advanced")))
+        root.addView(Ui.button(this,tr("focus_title")) { startActivity(Intent(this,FocusActivity::class.java)) })
+        root.addView(Ui.button(this,tr("backup_title")) { startActivity(Intent(this,BackupActivity::class.java)) })
         val version=Ui.button(this,tr("version")) {
             taps++
             if(taps>=7) {

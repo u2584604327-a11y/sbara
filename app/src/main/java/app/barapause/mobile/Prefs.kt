@@ -150,6 +150,10 @@ class Prefs(context: Context) {
         get() = p.getString("quick_target_label", "") ?: ""
         set(v) = p.edit().putString("quick_target_label", v.take(80)).apply()
 
+    var savedContentLink:String
+        get() = p.getString("content_link","") ?: ""
+        set(value) = p.edit().putString("content_link",value.take(2048)).apply()
+
     fun quickFavorites(): Set<String> =
         p.getStringSet("quick_favorites", emptySet())?.toSet() ?: emptySet()
     fun toggleQuickFavorite(pkg: String) {
