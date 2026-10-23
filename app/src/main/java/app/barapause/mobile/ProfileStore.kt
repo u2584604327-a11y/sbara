@@ -128,6 +128,7 @@ class ProfileStore(context:Context) {
                 snapshot.optInt("version")==1) { "Invalid settings schema" }
             val settingsObj=snapshot.optJSONObject("settings") ?: error("Invalid options")
             val rulesObj=snapshot.optJSONArray("rules") ?: error("Invalid rules")
+            settings.validatePortableSettings(snapshot)  // validate every slot before writes
             require(rulesObj.length()<=500 && settingsObj.length()<=48) { "Too many entries" }
             // Input validation for rules; live apply repeats full settings validation.
             val seen=mutableSetOf<String>()
