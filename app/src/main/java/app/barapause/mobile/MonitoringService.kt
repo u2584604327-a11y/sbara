@@ -20,6 +20,7 @@ import android.util.Log
 class MonitoringService : Service() {
     companion object {
         const val ACTION_TEST_POPUP = "app.barapause.mobile.ACTION_TEST_POPUP"
+        const val ACTION_PROFILE_CHANGED = "app.barapause.mobile.ACTION_PROFILE_CHANGED"
     }
     private var previewUntilElapsed = 0L
 
@@ -63,6 +64,13 @@ class MonitoringService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (intent?.action == ACTION_PROFILE_CHANGED) {
+            overlay.hide()
+            lastPkg=null
+            lastTickElapsed=SystemClock.elapsedRealtime()
+            prefs.recordMonitorDiagnostic("profile_change",System.currentTimeMillis().toString())
+            refreshNotification(L10n.t(this,"not_monitoring"))
+        }
         if (intent?.action == ACTION_TEST_POPUP) {
             if (PermissionUtils.hasOverlay(this)) {
                 previewUntilElapsed = SystemClock.elapsedRealtime() + 10_000L
@@ -82,6 +90,8 @@ class MonitoringService : Service() {
 
     private fun tick() {
         if (!prefs.monitoringEnabled || !PermissionUtils.hasUsageAccess(this) || !PermissionUtils.hasOverlay(this)) {
+            lastPkg=null
+            lastTickElapsed=SystemClock.elapsedRealtime()
             overlay.hide()
             prefs.recordMonitorDiagnostic("reason", "permission_or_switch_disabled")
             return

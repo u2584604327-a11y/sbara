@@ -26,6 +26,22 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Only recover when the owner explicitly enabled monitoring. Android 13+
+        // system Force Stop/Task Manager Stop cannot be bypassed by a background job.
+        if (::prefs.isInitialized && prefs.monitoringEnabled &&
+            PermissionUtils.hasUsageAccess(this) && PermissionUtils.hasOverlay(this)) {
+            val last=prefs.monitorDiagnostic("heartbeat").toLongOrNull() ?: 0L
+            if(last==0L || System.currentTimeMillis()-last > 20_000L) {
+                try {
+                    val i=Intent(this,MonitoringService::class.java)
+                    if(Build.VERSION.SDK_INT>=26)startForegroundService(i) else startService(i)
+                    prefs.recordMonitorDiagnostic("resume_recovery","started")
+                } catch(e:Exception) {
+                    prefs.recordMonitorDiagnostic("resume_recovery",
+                        "blocked:"+e.javaClass.simpleName)
+                }
+            }
+        }
         if (::statusText.isInitialized) { Appearance.applyWindow(this); render() }
     }
 
@@ -120,7 +136,9 @@ class MainActivity : Activity() {
                 "\n" + L10n.t(this,"diag_reason") + ": " + prefs.monitorDiagnostic("reason") +
                 "\n" + L10n.t(this,"diag_trigger") + ": " + prefs.monitorDiagnostic("last_trigger") +
                 "\n" + L10n.t(this,"diag_error") + ": " + prefs.monitorDiagnostic("error") +
-                "\n" + "Boot: " + prefs.monitorDiagnostic("boot_error")
+                "\n" + "Boot: " + prefs.monitorDiagnostic("boot_error") +
+                "\n" + "Resume: " + prefs.monitorDiagnostic("resume_recovery") +
+                "\n" + "Profile: " + prefs.monitorDiagnostic("profile_change")
             android.app.AlertDialog.Builder(this).setTitle(L10n.t(this,"diagnostics"))
                 .setMessage(report).setPositiveButton("OK",null).show()
         })
@@ -154,6 +172,12 @@ class MainActivity : Activity() {
                 }
             }
         })
+        root.addView(Ui.button(this, "▤ " + when(prefs.language) {
+            "en" -> "Profiles · quick switch"
+            "ja" -> "設定スロットの切替"
+            "zh-Hant" -> "多存檔 · 快速切換"
+            else -> "多存档 · 快速切换"
+        }) { startActivity(Intent(this,ProfilesActivity::class.java)) })
         root.addView(Ui.button(this, "▦ " + L10n.t(this,"widget_setup")) {
             startActivity(Intent(this, WidgetSetupActivity::class.java))
         })
