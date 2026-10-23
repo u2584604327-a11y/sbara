@@ -39,6 +39,27 @@ object SystemSearch {
         return false
     }
 
+    /**
+     * Best-effort entry into an app's *publicly exported* search activity.
+     * Google's SEARCH_ACTION specifies that omitting QUERY may open the search UI.
+     * No generic Android API can tap/focus a private search box in any app.
+     */
+    fun openSearchUi(context: Context, pkg: String): Boolean {
+        val intents=listOf(
+            Intent("com.google.android.gms.actions.SEARCH_ACTION").apply { setPackage(pkg) },
+            Intent(Intent.ACTION_SEARCH).apply {
+                setPackage(pkg)
+                putExtra(SearchManager.QUERY,"")
+            }
+        )
+        for(intent in intents) {
+            if(runCatching {
+                context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.isSuccess) return true
+        }
+        return false
+    }
+
     fun systemWebSearch(context: Context, query:String):Boolean {
         if(query.isBlank()) return false
         val system=Intent(Intent.ACTION_WEB_SEARCH).apply {
