@@ -11,14 +11,14 @@ android {
         applicationId = "app.barapause.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.7.0-preview"
+        versionCode = 9
+        versionName = "1.8.0-preview"
     }
 
     buildTypes {
         debug {
             // Separate testing app so existing V1 settings are never destroyed by debug signing changes.
-            applicationIdSuffix = ".v17"
+            applicationIdSuffix = ".v18"
             versionNameSuffix = "-preview"
         }
         release {

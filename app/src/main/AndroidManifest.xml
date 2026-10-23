@@ -29,6 +29,7 @@
         android:theme="@style/AppTheme">
 
         <activity android:name=".ShortcutEntryActivity" android:exported="true" />
+        <activity android:name=".ProfilesActivity" android:exported="false" />
         <activity android:name=".FocusActivity" android:exported="false" />
         <activity android:name=".BackupActivity" android:exported="false" />
         <activity android:name=".ContentLinkActivity" android:exported="false" />
