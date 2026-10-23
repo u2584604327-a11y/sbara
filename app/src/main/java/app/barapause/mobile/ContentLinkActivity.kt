@@ -16,6 +16,7 @@ import android.widget.Toast
  * Never deserializes intent://, javascript:, file:, content: or arbitrary app URI schemes.
  */
 class ContentLinkActivity : Activity() {
+    companion object { const val EXTRA_SHARED_URL = "app.barapause.link.SHARED_URL" }
     private lateinit var entry:EditText
     private lateinit var prefs:Prefs
 
@@ -32,7 +33,8 @@ class ContentLinkActivity : Activity() {
             setSingleLine(false)
             minLines=2
             maxLines=3
-            setText(prefs.savedContentLink)
+            val shared=intent?.getStringExtra(EXTRA_SHARED_URL)?.take(2048)
+            setText(shared ?: prefs.savedContentLink)
             setTextColor(Appearance.palette(this@ContentLinkActivity).text)
             background=Ui.cardBackground(this@ContentLinkActivity)
             setPadding(Ui.dp(this@ContentLinkActivity,14),Ui.dp(this@ContentLinkActivity,12),Ui.dp(this@ContentLinkActivity,14),Ui.dp(this@ContentLinkActivity,12))
