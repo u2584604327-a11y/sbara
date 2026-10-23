@@ -411,7 +411,58 @@ class Prefs(context: Context) {
         return replacement.size
     }
 
+    /**
+     * Pure validation for every profile slot. A corrupted inactive slot must fail
+     * before a multi-profile backup can replace the user's stored profiles.
+     */
+    fun validatePortableSettings(root:JSONObject) {
+        require(root.optString("schema")=="barapause-settings/1" &&
+            root.optInt("version")==1) { "Unsupported settings schema" }
+        val config=root.optJSONObject("settings") ?: error("Missing settings")
+        val list=root.optJSONArray("rules") ?: error("Missing rules")
+        require(list.length()<=500) { "Too many app rules" }
+        val seen=mutableSetOf<String>()
+        for(i in 0 until list.length()) {
+            val obj=list.optJSONObject(i) ?: error("Malformed rule")
+            val pkg=obj.optString("package")
+            require(pkg.length in 3..180 &&
+                pkg.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")) &&
+                seen.add(pkg)) { "Duplicate or malformed package" }
+            require(obj.optInt("seconds",-1) in 60..14400) { "Invalid limit" }
+            require(obj.optString("label",pkg).length<=80) { "Invalid label" }
+        }
+        fun range(key:String,min:Int,max:Int) {
+            if(config.has(key)) require(config.optInt(key,Int.MIN_VALUE) in min..max) {
+                "Invalid $key"
+            }
+        }
+        fun oneOf(key:String,values:Set<String>) {
+            if(config.has(key)) require(config.optString(key) in values) {
+                "Invalid $key"
+            }
+        }
+        range("breakSeconds",15,3600)
+        range("extensionSeconds",15,1800)
+        range("maxExtensionsPerDay",0,10)
+        range("studyStartMinute",0,1439)
+        range("studyEndMinute",0,1439)
+        range("popupOpacity",70,100)
+        oneOf("theme",setOf("system","light","dark","eye"))
+        oneOf("language",setOf("system","en","ja","zh-Hans","zh-Hant"))
+        oneOf("popupPosition",setOf("top","middle","bottom"))
+        oneOf("popupSize",setOf("compact","normal"))
+        oneOf("popupColor",setOf("sage","peach","lavender"))
+        oneOf("popupAnimation",setOf("spring","fade","none"))
+        oneOf("popupMotion",setOf("still","breathe","bob","peek","wave"))
+        if(config.has("popupTitle")) require(config.optString("popupTitle").length<=56)
+        if(config.has("popupBody")) require(config.optString("popupBody").length<=140)
+        for(key in listOf("popupMascot","studyModeEnabled")) {
+            if(config.has(key)) require(config.opt(key) is Boolean) { "Invalid $key" }
+        }
+    }
+
     fun importPortableSettings(root:JSONObject):Int {
+        validatePortableSettings(root)
         require(root.optString("schema")=="barapause-settings/1" && root.optInt("version")==1) {
             "Unsupported backup format"
         }
