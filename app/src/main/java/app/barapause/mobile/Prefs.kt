@@ -304,7 +304,144 @@ class Prefs(context: Context) {
 
     fun blocksToday(): Int { rollDayIfNeeded(); return p.getInt(if(testMode) "test_blocks" else "blocks_today", 0) }
 
+    /**
+     * Manual focus is an explicit time-bound boost to the existing study-mode rules.
+     * Expiration is persisted as wall time, so it naturally stops after process death.
+     * No alarms or background permissions are requested.
+     */
+    fun focusUntilMillis(): Long = p.getLong("focus_until",0L)
+    fun focusRemainingMillis(now:Long = System.currentTimeMillis()):Long =
+        (focusUntilMillis() - now).coerceAtLeast(0L)
+
+    fun isFocusActive(now:Long = System.currentTimeMillis()):Boolean =
+        focusRemainingMillis(now)>0L
+
+    fun startFocus(minutes:Int,now:Long=System.currentTimeMillis()) {
+        val duration=minutes.coerceIn(5,180)*60_000L
+        p.edit().putLong("focus_until",now+duration).apply()
+    }
+
+    fun stopFocus() {
+        p.edit().remove("focus_until").apply()
+    }
+
+    /** Config-only export. Excludes usage history, diagnostics, timers, test data and photo URI. */
+    fun exportPortableSettings(): JSONObject {
+        val root=JSONObject()
+        root.put("schema","barapause-settings/1")
+        root.put("version",1)
+        val settings=JSONObject().apply {
+            put("breakSeconds",breakSeconds)
+            put("extensionSeconds",extensionSeconds)
+            put("maxExtensionsPerDay",maxExtensionsPerDay)
+            put("studyModeEnabled",studyModeEnabled)
+            put("studyStartMinute",studyStartMinute)
+            put("studyEndMinute",studyEndMinute)
+            put("theme",theme)
+            put("language",language)
+            put("popupPosition",popupPosition)
+            put("popupSize",popupSize)
+            put("popupColor",popupColor)
+            put("popupAnimation",popupAnimation)
+            put("popupOpacity",popupOpacity)
+            put("popupMascot",popupMascot)
+            put("popupTitle",popupTitle)
+            put("popupBody",popupBody)
+            put("popupMotion",popupMotion)
+        }
+        root.put("settings",settings)
+        val records=JSONArray()
+        rules().values.filter { it.packageName.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")) }.forEach { r ->
+            records.put(JSONObject().apply {
+                put("package",r.packageName)
+                put("label",r.label)
+                put("minutes",r.limitMinutes)
+                put("seconds",r.limitSeconds)
+                put("enabled",r.enabled)
+            })
+        }
+        root.put("rules",records)
+        return root
+    }
+
+    /**
+     * Validates every import field first, then applies a merge of the portable settings.
+     * Missing keys do not override preferences. Existing rules not in backup are retained.
+     */
+    fun importPortableSettings(root:JSONObject):Int {
+        require(root.optString("schema")=="barapause-settings/1" && root.optInt("version")==1) {
+            "Unsupported backup format"
+        }
+        val config=root.optJSONObject("settings") ?: throw IllegalArgumentException("Missing settings")
+        val incoming=root.optJSONArray("rules") ?: throw IllegalArgumentException("Missing rules")
+        require(incoming.length()<=500) { "Too many rules" }
+        val parsed=mutableListOf<AppRule>()
+        val seen=mutableSetOf<String>()
+        for(index in 0 until incoming.length()) {
+            val obj=incoming.optJSONObject(index) ?: throw IllegalArgumentException("Invalid rule")
+            val pkg=obj.optString("package")
+            require(pkg.length in 3..180 && pkg.matches(Regex("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+"))) { "Invalid package" }
+            require(seen.add(pkg)) { "Duplicate package" }
+            val sec=obj.optInt("seconds",-1)
+            require(sec in 60..14400) { "Invalid time" }
+            parsed.add(AppRule(
+                pkg,obj.optString("label",pkg).take(80),
+                (sec/60).coerceAtLeast(1),obj.optBoolean("enabled",true),sec
+            ))
+        }
+        fun validEnum(key:String, allowed:Set<String>):String? =
+            if(config.has(key)) config.optString(key).also { require(it in allowed) { "Invalid $key" } } else null
+        val safeTheme=validEnum("theme",setOf("system","light","dark","eye"))
+        val safeLang=validEnum("language",setOf("system","en","ja","zh-Hans","zh-Hant"))
+        val safePosition=validEnum("popupPosition",setOf("top","middle","bottom"))
+        val safeSize=validEnum("popupSize",setOf("compact","normal"))
+        val safeColor=validEnum("popupColor",setOf("sage","peach","lavender"))
+        val safeAnimation=validEnum("popupAnimation",setOf("spring","fade","none"))
+        val safeMotion=validEnum("popupMotion",setOf("still","breathe","bob","peek","wave"))
+        fun optionalInt(key:String,min:Int,max:Int):Int? {
+            if(!config.has(key)) return null
+            val value=config.optInt(key,-1)
+            require(value in min..max) { "Invalid $key" }
+            return value
+        }
+        val safeBreak=optionalInt("breakSeconds",15,3600)
+        val safeExtend=optionalInt("extensionSeconds",15,1800)
+        val safeMax=optionalInt("maxExtensionsPerDay",0,10)
+        val safeStart=optionalInt("studyStartMinute",0,1439)
+        val safeEnd=optionalInt("studyEndMinute",0,1439)
+        val safeOpacity=optionalInt("popupOpacity",70,100)
+        fun optionalText(key:String,max:Int):String? {
+            if(!config.has(key)) return null
+            val str=config.optString(key)
+            require(str.length<=max) { "Too long: $key" }
+            return str
+        }
+        val safeTitle=optionalText("popupTitle",56)
+        val safeBody=optionalText("popupBody",140)
+        // Commit validation-complete state. The normal setters clamp; all values are already checked.
+        safeBreak?.let { breakSeconds=it }
+        safeExtend?.let { extensionSeconds=it }
+        safeMax?.let { maxExtensionsPerDay=it }
+        if(config.has("studyModeEnabled")) studyModeEnabled=config.optBoolean("studyModeEnabled")
+        safeStart?.let { studyStartMinute=it }
+        safeEnd?.let { studyEndMinute=it }
+        safeTheme?.let { theme=it }
+        safeLang?.let { language=it }
+        safePosition?.let { popupPosition=it }
+        safeSize?.let { popupSize=it }
+        safeColor?.let { popupColor=it }
+        safeAnimation?.let { popupAnimation=it }
+        safeMotion?.let { popupMotion=it }
+        safeOpacity?.let { popupOpacity=it }
+        if(config.has("popupMascot")) popupMascot=config.optBoolean("popupMascot")
+        safeTitle?.let { popupTitle=it }
+        safeBody?.let { popupBody=it }
+        putRulesBatch(parsed)
+        return parsed.size
+    }
+
     fun isStudyModeActive(now: Calendar = Calendar.getInstance()): Boolean {
+        if(isFocusActive()) return true
         if (!studyModeEnabled) return false
         val minute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         return RuleMath.isMinuteInsideWindow(minute, studyStartMinute, studyEndMinute)
